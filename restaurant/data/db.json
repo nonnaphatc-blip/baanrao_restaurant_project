@@ -1,0 +1,1348 @@
+{
+ "users": [
+  {
+   "id": 1,
+   "username": "Administator",
+   "name": "ผู้ดูแลระบบ",
+   "phone": "",
+   "role": "admin",
+   "active": true,
+   "points": 100000,
+   "password_hash": "scrypt$4c81930f9593efec8c058936135e717a$841990258cf5743401cb37628a309682f41ffe2a6922c13cf6ef15e93a0ad7c5cd2efdb3411a10af2a5762acb88da805e1e6d7f99a705a39dff9cd6e8e2c810b"
+  },
+  {
+   "id": 2,
+   "username": "Nonnaphatzaza",
+   "name": "นายไก่กะป๊อกๆ",
+   "phone": "",
+   "role": "customer",
+   "active": true,
+   "points": 0,
+   "password_hash": "scrypt$646a56364f3fe2379d7bd3d25ec6fafa$1beb66af383b46b8e945b5213d03aac11ea13e583acbbaec7202e54ee0321febad824281aa12e59b1fdda54ce6f796f3589de686ac0e71a5761545bf9a18558a",
+   "session_version": 1
+  },
+  {
+   "id": 3,
+   "username": "CashierUser1",
+   "name": "Cashier",
+   "phone": "",
+   "role": "cashier",
+   "active": true,
+   "points": 0,
+   "password_hash": "scrypt$dde2d651d5c833bbbdc235a64a0bc567$5c039d52d5b66d9f96ec0f35879314fb9603bf5c6da5e8d55b9ac09cea87ea0b36112bbfd8109377c0ca8cd4262c8e42e6d8957078a5215a9a1545f3a77c2909"
+  },
+  {
+   "id": 4,
+   "username": "testuser1234",
+   "name": "ชาไทย",
+   "phone": "",
+   "role": "kitchen",
+   "active": true,
+   "points": 0,
+   "password_hash": "scrypt$db1375d2e576737ea5e7d9a29a72306b$b0af18e2d38fec796ee97eb2a0efa424a2bbedd5c1f0b79358f71d0507140bddb430cd43e9646fb88a0205372649d38c43e99219b150a1aab35f89761e31cd80"
+  }
+ ],
+ "categories": [
+  {
+   "id": 1,
+   "name": "อาหารจานเดียว",
+   "sort": 1
+  },
+  {
+   "id": 2,
+   "name": "ต้ม / ยำ",
+   "sort": 2
+  },
+  {
+   "id": 3,
+   "name": "เครื่องดื่ม",
+   "sort": 3
+  }
+ ],
+ "menu": [
+  {
+   "id": 1,
+   "name": "กะเพราหมูสับ",
+   "category_id": 1,
+   "price": 60.0,
+   "description": "กระเพราหมูสับแสนอร่อย",
+   "image": "647fbac8c9ed4ee5a50e1a394223b311.jpg",
+   "available": true,
+   "has_spice": true,
+   "has_egg": true,
+   "has_size": false,
+   "recipe": [
+    {
+     "ingredient_id": 1,
+     "qty": 1.0
+    },
+    {
+     "ingredient_id": 2,
+     "qty": 100.0
+    }
+   ],
+   "unit": "จาน"
+  },
+  {
+   "id": 2,
+   "name": "ข้าวผัดกุ้ง",
+   "category_id": 1,
+   "price": 80.0,
+   "description": "",
+   "image": "11ac4cd8ebf84296b1d32c1ab50a6dfc.jpg",
+   "available": true,
+   "has_spice": false,
+   "has_egg": true,
+   "has_size": true,
+   "recipe": [
+    {
+     "ingredient_id": 1,
+     "qty": 1.0
+    },
+    {
+     "ingredient_id": 4,
+     "qty": 4.0
+    }
+   ],
+   "unit": "จาน"
+  },
+  {
+   "id": 3,
+   "name": "ผัดไทยกุ้งสด",
+   "category_id": 1,
+   "price": 90.0,
+   "description": "",
+   "image": "d1c68db7bf594e4dbb94f1ed35c87450.jpg",
+   "available": true,
+   "has_spice": true,
+   "has_egg": true,
+   "has_size": true,
+   "recipe": [
+    {
+     "ingredient_id": 4,
+     "qty": 5.0
+    }
+   ],
+   "unit": "จาน"
+  },
+  {
+   "id": 4,
+   "name": "ต้มยำกุ้ง",
+   "category_id": 2,
+   "price": 150.0,
+   "description": "",
+   "image": "4b419377901a4aa38d2442b883ca5a2c.jpg",
+   "available": true,
+   "has_spice": true,
+   "has_egg": false,
+   "has_size": true,
+   "recipe": [
+    {
+     "ingredient_id": 4,
+     "qty": 6.0
+    }
+   ],
+   "unit": "จาน"
+  },
+  {
+   "id": 5,
+   "name": "ยำวุ้นเส้น",
+   "category_id": 2,
+   "price": 90.0,
+   "description": "",
+   "image": "97a1f62769ff4c4786067a18c42aad49.jpg",
+   "available": true,
+   "has_spice": true,
+   "has_egg": false,
+   "has_size": false,
+   "recipe": [
+    {
+     "ingredient_id": 2,
+     "qty": 80.0
+    }
+   ],
+   "unit": "จาน"
+  },
+  {
+   "id": 6,
+   "name": "น้ำอัดลม",
+   "category_id": 3,
+   "price": 20.0,
+   "description": "",
+   "image": "cd983e02d38b492497b05cadaa661620.jpg",
+   "available": true,
+   "has_spice": false,
+   "has_egg": false,
+   "has_size": false,
+   "recipe": [
+    {
+     "ingredient_id": 5,
+     "qty": 1.0
+    }
+   ],
+   "unit": "จาน"
+  },
+  {
+   "name": "ชาไทย",
+   "category_id": 3,
+   "price": 20.0,
+   "description": "",
+   "image": "0e25d49ea3f54dde85cdafebf1696860.jpg",
+   "available": true,
+   "has_spice": false,
+   "has_egg": false,
+   "has_size": false,
+   "recipe": [
+    {
+     "ingredient_id": 6,
+     "qty": 1.0
+    },
+    {
+     "ingredient_id": 7,
+     "qty": 500.0
+    }
+   ],
+   "id": 7,
+   "unit": "จาน"
+  }
+ ],
+ "tables": [
+  {
+   "id": 1,
+   "name": "T1",
+   "seats": 4,
+   "status": "occupied",
+   "qr_token": "ff76742e6f86f89366b3be74fd7690b4",
+   "access_code": "004314"
+  },
+  {
+   "id": 2,
+   "name": "T2",
+   "seats": 4,
+   "status": "free",
+   "qr_token": "6782abc471f9daf7",
+   "access_code": "139196"
+  },
+  {
+   "id": 3,
+   "name": "T3",
+   "seats": 4,
+   "status": "free",
+   "qr_token": "628b6e0b39e6bb69",
+   "access_code": "132600"
+  },
+  {
+   "id": 4,
+   "name": "T4",
+   "seats": 4,
+   "status": "free",
+   "qr_token": "9262959fee0d3ce5",
+   "access_code": "990368"
+  },
+  {
+   "id": 5,
+   "name": "T5",
+   "seats": 6,
+   "status": "free",
+   "qr_token": "01d676c8f6d0a953",
+   "access_code": "380859"
+  },
+  {
+   "id": 6,
+   "name": "T6",
+   "seats": 6,
+   "status": "free",
+   "qr_token": "05bbb46416fc8a26",
+   "access_code": "228766"
+  }
+ ],
+ "orders": [
+  {
+   "id": 1,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 1,
+     "menu_id": 1,
+     "name": "กะเพราหมูสับ",
+     "price": 60.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด"
+     },
+     "note": "",
+     "status": "cooking",
+     "created_at": "2026-09-24 17:43:49",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 2,
+     "menu_id": 6,
+     "name": "น้ำอัดลม",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {},
+     "note": "",
+     "status": "cooking",
+     "created_at": "2026-09-24 17:43:54",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 3,
+     "menu_id": 5,
+     "name": "ยำวุ้นเส้น",
+     "price": 90.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด"
+     },
+     "note": "",
+     "status": "cooking",
+     "created_at": "2026-09-24 17:43:57",
+     "source": "customer",
+     "paid": true
+    }
+   ],
+   "status": "paid",
+   "created_at": "2026-09-24 17:43:49"
+  },
+  {
+   "id": 2,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 4,
+     "menu_id": 2,
+     "name": "ข้าวผัดกุ้ง",
+     "price": 80.0,
+     "extra": 20.0,
+     "qty": 4,
+     "options": {
+      "egg": "เพิ่มไข่",
+      "size": "พิเศษ"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 20:30:04",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 5,
+     "menu_id": 7,
+     "name": "ชาไทย",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 2,
+     "options": {},
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 20:30:04",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 6,
+     "menu_id": 6,
+     "name": "น้ำอัดลม",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 2,
+     "options": {},
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 20:30:04",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 7,
+     "menu_id": 4,
+     "name": "ต้มยำกุ้ง",
+     "price": 150.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "เผ็ดกลาง",
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 20:30:04",
+     "source": "customer",
+     "paid": true
+    }
+   ],
+   "status": "paid",
+   "created_at": "2026-09-24 20:30:04"
+  },
+  {
+   "id": 3,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 8,
+     "menu_id": 1,
+     "name": "กะเพราหมูสับ",
+     "price": 60.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด"
+     },
+     "note": "",
+     "status": "pending",
+     "created_at": "2026-09-24 23:09:25",
+     "source": "customer",
+     "paid": true
+    }
+   ],
+   "status": "paid",
+   "created_at": "2026-09-24 23:09:25"
+  },
+  {
+   "id": 4,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 9,
+     "menu_id": 1,
+     "name": "กะเพราหมูสับ",
+     "price": 60.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "เผ็ดมาก"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:14:13",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 10,
+     "menu_id": 6,
+     "name": "น้ำอัดลม",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {},
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:14:13",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 11,
+     "menu_id": 2,
+     "name": "ข้าวผัดกุ้ง",
+     "price": 80.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:14:13",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 12,
+     "menu_id": 7,
+     "name": "ชาไทย",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {},
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:14:13",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 13,
+     "menu_id": 4,
+     "name": "ต้มยำกุ้ง",
+     "price": 150.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด",
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:14:13",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 14,
+     "menu_id": 5,
+     "name": "ยำวุ้นเส้น",
+     "price": 90.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:14:13",
+     "source": "customer",
+     "paid": true
+    }
+   ],
+   "status": "paid",
+   "created_at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 5,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 15,
+     "menu_id": 4,
+     "name": "ต้มยำกุ้ง",
+     "price": 150.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด",
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:36:17",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 16,
+     "menu_id": 3,
+     "name": "ผัดไทยกุ้งสด",
+     "price": 90.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด",
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:36:17",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 17,
+     "menu_id": 2,
+     "name": "ข้าวผัดกุ้ง",
+     "price": 80.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:36:17",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 18,
+     "menu_id": 1,
+     "name": "กะเพราหมูสับ",
+     "price": 60.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {
+      "spice": "ไม่เผ็ด"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:36:17",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 19,
+     "menu_id": 6,
+     "name": "น้ำอัดลม",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {},
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:36:17",
+     "source": "customer",
+     "paid": true
+    },
+    {
+     "id": 20,
+     "menu_id": 7,
+     "name": "ชาไทย",
+     "price": 20.0,
+     "extra": 0.0,
+     "qty": 1,
+     "options": {},
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-24 23:36:17",
+     "source": "customer",
+     "paid": true
+    }
+   ],
+   "status": "paid",
+   "created_at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 6,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 21,
+     "menu_id": 1,
+     "name": "กะเพราหมูสับ",
+     "price": 60.0,
+     "extra": 0.0,
+     "qty": 1,
+     "unit": "จาน",
+     "options": {
+      "spice": "ไม่เผ็ด"
+     },
+     "note": "",
+     "status": "pending",
+     "created_at": "2026-09-29 14:33:26",
+     "source": "customer",
+     "paid": false
+    }
+   ],
+   "status": "open",
+   "created_at": "2026-09-29 14:33:26"
+  }
+ ],
+ "bills": [
+  {
+   "id": 1,
+   "order_id": 1,
+   "table_id": 1,
+   "table_name": "T1",
+   "items": [
+    {
+     "name": "กะเพราหมูสับ",
+     "options": "ไม่เผ็ด",
+     "qty": 1,
+     "price": 60.0,
+     "amount": 60.0
+    },
+    {
+     "name": "น้ำอัดลม",
+     "options": "",
+     "qty": 1,
+     "price": 20.0,
+     "amount": 20.0
+    },
+    {
+     "name": "ยำวุ้นเส้น",
+     "options": "ไม่เผ็ด",
+     "qty": 1,
+     "price": 90.0,
+     "amount": 90.0
+    }
+   ],
+   "subtotal": 170.0,
+   "discount": 0.0,
+   "redeem": 0,
+   "service": 17.0,
+   "vat": 13.09,
+   "total": 200.09,
+   "vat_rate": 7.0,
+   "service_rate": 10.0,
+   "method": "qr",
+   "member": "",
+   "earned": 0,
+   "cashier": "CashierUser1",
+   "created_at": "2026-09-24 17:44:59",
+   "date": "2026-09-24",
+   "receipt_no": "R20260924-0001"
+  },
+  {
+   "id": 2,
+   "order_id": 2,
+   "table_id": 1,
+   "table_name": "T1",
+   "items": [
+    {
+     "name": "ข้าวผัดกุ้ง",
+     "options": "เพิ่มไข่ · พิเศษ",
+     "qty": 4,
+     "price": 100.0,
+     "amount": 400.0
+    },
+    {
+     "name": "ชาไทย",
+     "options": "",
+     "qty": 2,
+     "price": 20.0,
+     "amount": 40.0
+    },
+    {
+     "name": "น้ำอัดลม",
+     "options": "",
+     "qty": 2,
+     "price": 20.0,
+     "amount": 40.0
+    },
+    {
+     "name": "ต้มยำกุ้ง",
+     "options": "เผ็ดกลาง · ธรรมดา",
+     "qty": 1,
+     "price": 150.0,
+     "amount": 150.0
+    }
+   ],
+   "subtotal": 630.0,
+   "discount": 0.0,
+   "redeem": 0,
+   "service": 63.0,
+   "vat": 48.51,
+   "total": 741.51,
+   "vat_rate": 7.0,
+   "service_rate": 10.0,
+   "method": "cash",
+   "member": "",
+   "earned": 0,
+   "cashier": "CashierUser1",
+   "created_at": "2026-09-24 20:31:35",
+   "date": "2026-09-24",
+   "receipt_no": "R20260924-0002"
+  },
+  {
+   "id": 3,
+   "order_id": 3,
+   "table_id": 1,
+   "table_name": "T1",
+   "items": [
+    {
+     "name": "กะเพราหมูสับ",
+     "options": "ไม่เผ็ด",
+     "qty": 1,
+     "price": 60.0,
+     "amount": 60.0
+    }
+   ],
+   "subtotal": 60.0,
+   "discount": 0.0,
+   "redeem": 0,
+   "service": 6.0,
+   "vat": 4.62,
+   "total": 70.62,
+   "vat_rate": 7.0,
+   "service_rate": 10.0,
+   "method": "card",
+   "member": "",
+   "earned": 0,
+   "cashier": "CashierUser1",
+   "created_at": "2026-09-24 23:10:28",
+   "date": "2026-09-24",
+   "receipt_no": "R20260924-0003"
+  },
+  {
+   "id": 4,
+   "order_id": 4,
+   "table_id": 1,
+   "table_name": "T1",
+   "items": [
+    {
+     "name": "กะเพราหมูสับ",
+     "options": "เผ็ดมาก",
+     "qty": 1,
+     "price": 60.0,
+     "amount": 60.0
+    },
+    {
+     "name": "น้ำอัดลม",
+     "options": "",
+     "qty": 1,
+     "price": 20.0,
+     "amount": 20.0
+    },
+    {
+     "name": "ข้าวผัดกุ้ง",
+     "options": "ธรรมดา",
+     "qty": 1,
+     "price": 80.0,
+     "amount": 80.0
+    },
+    {
+     "name": "ชาไทย",
+     "options": "",
+     "qty": 1,
+     "price": 20.0,
+     "amount": 20.0
+    },
+    {
+     "name": "ต้มยำกุ้ง",
+     "options": "ไม่เผ็ด · ธรรมดา",
+     "qty": 1,
+     "price": 150.0,
+     "amount": 150.0
+    },
+    {
+     "name": "ยำวุ้นเส้น",
+     "options": "ไม่เผ็ด",
+     "qty": 1,
+     "price": 90.0,
+     "amount": 90.0
+    }
+   ],
+   "subtotal": 420.0,
+   "discount": 0.0,
+   "redeem": 0,
+   "service": 42.0,
+   "vat": 32.34,
+   "total": 494.34,
+   "vat_rate": 7.0,
+   "service_rate": 10.0,
+   "method": "cash",
+   "member": "",
+   "earned": 0,
+   "cashier": "CashierUser1",
+   "created_at": "2026-09-24 23:16:32",
+   "date": "2026-09-24",
+   "receipt_no": "R20260924-0004"
+  },
+  {
+   "id": 5,
+   "order_id": 5,
+   "table_id": 1,
+   "table_name": "T1",
+   "items": [
+    {
+     "name": "ต้มยำกุ้ง",
+     "options": "ไม่เผ็ด · ธรรมดา",
+     "qty": 1,
+     "price": 150.0,
+     "amount": 150.0
+    },
+    {
+     "name": "ผัดไทยกุ้งสด",
+     "options": "ไม่เผ็ด · ธรรมดา",
+     "qty": 1,
+     "price": 90.0,
+     "amount": 90.0
+    },
+    {
+     "name": "ข้าวผัดกุ้ง",
+     "options": "ธรรมดา",
+     "qty": 1,
+     "price": 80.0,
+     "amount": 80.0
+    },
+    {
+     "name": "กะเพราหมูสับ",
+     "options": "ไม่เผ็ด",
+     "qty": 1,
+     "price": 60.0,
+     "amount": 60.0
+    },
+    {
+     "name": "น้ำอัดลม",
+     "options": "",
+     "qty": 1,
+     "price": 20.0,
+     "amount": 20.0
+    },
+    {
+     "name": "ชาไทย",
+     "options": "",
+     "qty": 1,
+     "price": 20.0,
+     "amount": 20.0
+    }
+   ],
+   "subtotal": 420.0,
+   "discount": 0.0,
+   "redeem": 0,
+   "service": 42.0,
+   "vat": 32.34,
+   "total": 494.34,
+   "vat_rate": 7.0,
+   "service_rate": 10.0,
+   "method": "cash",
+   "member": "",
+   "earned": 0,
+   "cashier": "CashierUser1",
+   "created_at": "2026-09-24 23:37:00",
+   "date": "2026-09-24",
+   "receipt_no": "R20260924-0005"
+  }
+ ],
+ "reservations": [],
+ "queue": [
+  {
+   "name": "Manee",
+   "phone": "00000000",
+   "party": 2,
+   "status": "seated",
+   "created_at": "2026-09-24 23:12:56",
+   "date": "2026-09-24",
+   "number": 1,
+   "id": 4
+  }
+ ],
+ "ingredients": [
+  {
+   "id": 1,
+   "name": "ข้าวสวย",
+   "unit": "จาน",
+   "stock": 89.0,
+   "min_stock": 20.0
+  },
+  {
+   "id": 2,
+   "name": "หมูสับ",
+   "unit": "กรัม",
+   "stock": 4340.0,
+   "min_stock": 500.0
+  },
+  {
+   "id": 3,
+   "name": "ไข่ไก่",
+   "unit": "ฟอง",
+   "stock": 120.0,
+   "min_stock": 20.0
+  },
+  {
+   "id": 4,
+   "name": "กุ้ง",
+   "unit": "ตัว",
+   "stock": 153.0,
+   "min_stock": 30.0
+  },
+  {
+   "id": 5,
+   "name": "น้ำอัดลม",
+   "unit": "ขวด",
+   "stock": 55.0,
+   "min_stock": 12.0
+  },
+  {
+   "name": "ผงชาไทย",
+   "unit": "ซอง",
+   "stock": 96.0,
+   "min_stock": 0.0,
+   "id": 6
+  },
+  {
+   "name": "นมสด",
+   "unit": "มิลลิลิตร",
+   "stock": 48000.0,
+   "min_stock": 0.0,
+   "id": 7
+  }
+ ],
+ "events": [
+  {
+   "id": 1,
+   "target": "staff",
+   "text": "คิวใหม่ #1: นายไก่กะป๊อกๆ 2 คน",
+   "at": "2026-09-24 17:20:17"
+  },
+  {
+   "id": 2,
+   "target": "staff",
+   "text": "คิวใหม่ #2: Nonnaphat 4 คน",
+   "at": "2026-09-24 17:38:57"
+  },
+  {
+   "id": 3,
+   "target": "kitchen",
+   "text": "T1: กะเพราหมูสับ x1",
+   "at": "2026-09-24 17:43:49"
+  },
+  {
+   "id": 4,
+   "target": "kitchen",
+   "text": "T1: น้ำอัดลม x1",
+   "at": "2026-09-24 17:43:54"
+  },
+  {
+   "id": 5,
+   "target": "kitchen",
+   "text": "T1: ยำวุ้นเส้น x1",
+   "at": "2026-09-24 17:43:57"
+  },
+  {
+   "id": 6,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-24 17:44:19"
+  },
+  {
+   "id": 7,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-24 17:44:20"
+  },
+  {
+   "id": 8,
+   "target": "staff",
+   "text": "คิวใหม่ #1: ajsiojfsfsf 4 คน",
+   "at": "2026-09-24 20:28:29"
+  },
+  {
+   "id": 9,
+   "target": "kitchen",
+   "text": "T1: ข้าวผัดกุ้ง x4",
+   "at": "2026-09-24 20:30:04"
+  },
+  {
+   "id": 10,
+   "target": "kitchen",
+   "text": "T1: ชาไทย x2",
+   "at": "2026-09-24 20:30:04"
+  },
+  {
+   "id": 11,
+   "target": "kitchen",
+   "text": "T1: น้ำอัดลม x2",
+   "at": "2026-09-24 20:30:04"
+  },
+  {
+   "id": 12,
+   "target": "kitchen",
+   "text": "T1: ต้มยำกุ้ง x1",
+   "at": "2026-09-24 20:30:04"
+  },
+  {
+   "id": 13,
+   "target": "staff",
+   "text": "T1: ข้าวผัดกุ้ง พร้อมเสิร์ฟ",
+   "at": "2026-09-24 20:30:49"
+  },
+  {
+   "id": 14,
+   "target": "staff",
+   "text": "T1: ชาไทย พร้อมเสิร์ฟ",
+   "at": "2026-09-24 20:30:50"
+  },
+  {
+   "id": 15,
+   "target": "staff",
+   "text": "T1: น้ำอัดลม พร้อมเสิร์ฟ",
+   "at": "2026-09-24 20:30:51"
+  },
+  {
+   "id": 16,
+   "target": "staff",
+   "text": "T1: ต้มยำกุ้ง พร้อมเสิร์ฟ",
+   "at": "2026-09-24 20:30:51"
+  },
+  {
+   "id": 17,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-24 20:31:09"
+  },
+  {
+   "id": 18,
+   "target": "kitchen",
+   "text": "T1: กะเพราหมูสับ x1",
+   "at": "2026-09-24 23:09:25"
+  },
+  {
+   "id": 19,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-24 23:09:29"
+  },
+  {
+   "id": 20,
+   "target": "staff",
+   "text": "คิวใหม่ #1: Manee 2 คน",
+   "at": "2026-09-24 23:12:56"
+  },
+  {
+   "id": 21,
+   "target": "kitchen",
+   "text": "T1: กะเพราหมูสับ x1",
+   "at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 22,
+   "target": "kitchen",
+   "text": "T1: น้ำอัดลม x1",
+   "at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 23,
+   "target": "kitchen",
+   "text": "T1: ข้าวผัดกุ้ง x1",
+   "at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 24,
+   "target": "kitchen",
+   "text": "T1: ชาไทย x1",
+   "at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 25,
+   "target": "kitchen",
+   "text": "T1: ต้มยำกุ้ง x1",
+   "at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 26,
+   "target": "kitchen",
+   "text": "T1: ยำวุ้นเส้น x1",
+   "at": "2026-09-24 23:14:13"
+  },
+  {
+   "id": 27,
+   "target": "staff",
+   "text": "T1: กะเพราหมูสับ พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:14:53"
+  },
+  {
+   "id": 28,
+   "target": "staff",
+   "text": "T1: น้ำอัดลม พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:14:53"
+  },
+  {
+   "id": 29,
+   "target": "staff",
+   "text": "T1: ข้าวผัดกุ้ง พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:14:53"
+  },
+  {
+   "id": 30,
+   "target": "staff",
+   "text": "T1: ชาไทย พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:14:54"
+  },
+  {
+   "id": 31,
+   "target": "staff",
+   "text": "T1: ต้มยำกุ้ง พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:14:54"
+  },
+  {
+   "id": 32,
+   "target": "staff",
+   "text": "T1: ยำวุ้นเส้น พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:14:54"
+  },
+  {
+   "id": 33,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-24 23:16:16"
+  },
+  {
+   "id": 34,
+   "target": "kitchen",
+   "text": "T1: ต้มยำกุ้ง x1",
+   "at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 35,
+   "target": "kitchen",
+   "text": "T1: ผัดไทยกุ้งสด x1",
+   "at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 36,
+   "target": "kitchen",
+   "text": "T1: ข้าวผัดกุ้ง x1",
+   "at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 37,
+   "target": "kitchen",
+   "text": "T1: กะเพราหมูสับ x1",
+   "at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 38,
+   "target": "kitchen",
+   "text": "T1: น้ำอัดลม x1",
+   "at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 39,
+   "target": "kitchen",
+   "text": "T1: ชาไทย x1",
+   "at": "2026-09-24 23:36:17"
+  },
+  {
+   "id": 40,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-24 23:36:30"
+  },
+  {
+   "id": 41,
+   "target": "staff",
+   "text": "T1: ต้มยำกุ้ง พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:36:39"
+  },
+  {
+   "id": 42,
+   "target": "staff",
+   "text": "T1: ผัดไทยกุ้งสด พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:36:40"
+  },
+  {
+   "id": 43,
+   "target": "staff",
+   "text": "T1: ข้าวผัดกุ้ง พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:36:41"
+  },
+  {
+   "id": 44,
+   "target": "staff",
+   "text": "T1: กะเพราหมูสับ พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:36:41"
+  },
+  {
+   "id": 45,
+   "target": "staff",
+   "text": "T1: น้ำอัดลม พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:36:42"
+  },
+  {
+   "id": 46,
+   "target": "staff",
+   "text": "T1: ชาไทย พร้อมเสิร์ฟ",
+   "at": "2026-09-24 23:36:44"
+  },
+  {
+   "id": 47,
+   "target": "kitchen",
+   "text": "T1: กะเพราหมูสับ x1",
+   "at": "2026-09-29 14:33:26"
+  }
+ ],
+ "seq": {
+  "users": 4,
+  "categories": 3,
+  "ingredients": 8,
+  "menu": 7,
+  "tables": 6,
+  "queue": 4,
+  "events": 47,
+  "orders": 6,
+  "items": 21,
+  "bills": 5
+ },
+ "settings": {
+  "vat": 7.0,
+  "service": 10.0,
+  "point_per_baht": 10.0,
+  "egg_price": 10.0,
+  "size_price": 10.0
+ },
+ "notification_reads": {
+  "3": 33,
+  "1": {
+   "through": 0,
+   "ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ]
+  }
+ },
+ "notification_sessions": {
+  "V7NqNAvOru9gpUQ8LEB2iP6nnTMq-ulc": {
+   "user_id": 1,
+   "start_event_id": 33,
+   "read_ids": [],
+   "created_at": 1790267693.8898926
+  },
+  "JoTDG9Dab1sImOaxFAdrimVFxX1NzV1g": {
+   "user_id": 2,
+   "start_event_id": 33,
+   "read_ids": [],
+   "created_at": 1790267731.3037283
+  },
+  "bK07fpQlKyitp3aXZEMq-gouR-JTThm4": {
+   "user_id": 2,
+   "start_event_id": 46,
+   "read_ids": [],
+   "created_at": 1790269104.3682194
+  },
+  "jOe4A1OkjipGlFWhuobG7VRLkY5wn_ES": {
+   "user_id": 3,
+   "start_event_id": 46,
+   "read_ids": [],
+   "created_at": 1790612776.9523497
+  },
+  "Ee7AybLuoM6YUxaZzRJqTTdM7sFpFkvm": {
+   "user_id": 2,
+   "start_event_id": 46,
+   "read_ids": [],
+   "created_at": 1790612788.5538158
+  },
+  "RGA5bU5omMdbclmN6rwcPdg4uYOERsV3": {
+   "user_id": 2,
+   "start_event_id": 46,
+   "read_ids": [],
+   "created_at": 1790667183.6779602
+  },
+  "dHqLo1PJKvbP6ew4aehHgU7Cvyaucj7E": {
+   "user_id": 3,
+   "start_event_id": 47,
+   "read_ids": [],
+   "created_at": 1790667214.4730918
+  }
+ },
+ "logs": [],
+ "rate_limits": {}
+}
