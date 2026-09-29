@@ -4,11 +4,19 @@ import os
 import tempfile
 import threading
 import time
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+MONGODB_URI = (os.environ.get("MONGODB_URI") or os.environ.get("MONGODB_URL")
+               or os.environ.get("MONGO_URL"))
+MONGODB_DB = os.environ.get("MONGODB_DB", "baanrao")
+DB_BACKEND = os.environ.get("DB_BACKEND", "").strip().lower()
+USE_MONGODB = bool(MONGODB_URI) and DB_BACKEND != "postgres"
+USE_POSTGRES = bool(DATABASE_URL) and not USE_MONGODB
+USE_REMOTE_DB = USE_MONGODB or USE_POSTGRES
 BLOB_TOKEN = os.environ.get("BLOB_READ_WRITE_TOKEN")
 ON_VERCEL = bool(os.environ.get("VERCEL"))
 DATA_DIR = os.environ.get("DATA_DIR") or ("/tmp/restaurant-data" if ON_VERCEL else os.path.join(BASE, "data"))
@@ -20,6 +28,10 @@ COLLECTIONS = ("users", "categories", "menu", "tables", "orders", "bills",
                "reservations", "queue", "ingredients", "events")
 _lock = threading.RLock()
 _PG_TABLE = "restaurant_state"
+_MONGO_STATE_ID = "restaurant_state"
+_MONGO_LOCK_ID = "restaurant_state_lock"
+_mongo_client = None
+_mongo_client_lock = threading.Lock()
 
 
 class AppError(Exception):
@@ -89,8 +101,93 @@ def _ensure_postgres(conn):
                  (Jsonb(default_db()),))
 
 
+def _mongo_collections():
+    """Return MongoDB collections, reusing the client in warm serverless instances."""
+    global _mongo_client
+    if not MONGODB_URI:
+        raise StorageError("Set MONGODB_URI to connect to MongoDB Atlas")
+    try:
+        from pymongo import MongoClient
+        with _mongo_client_lock:
+            if _mongo_client is None:
+                _mongo_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000,
+                                           connectTimeoutMS=5000, appname="baanrao-restaurant")
+        db = _mongo_client[MONGODB_DB]
+        return db["state"], db["locks"], db["uploads"]
+    except ImportError as e:
+        raise StorageError("Install pymongo to connect to MongoDB Atlas") from e
+
+
+def _mongo_ensure(state):
+    from pymongo.errors import PyMongoError
+    try:
+        state.update_one({"_id": _MONGO_STATE_ID},
+                         {"$setOnInsert": {"data": default_db()}}, upsert=True)
+        row = state.find_one({"_id": _MONGO_STATE_ID}, {"data": 1})
+        if row is None:
+            raise StorageError("Restaurant state was not found in MongoDB")
+        return _with_defaults(row["data"])
+    except PyMongoError as e:
+        raise StorageError("Could not read restaurant data from MongoDB Atlas") from e
+
+
+def _mongo_acquire(locks):
+    from pymongo import ReturnDocument
+    from pymongo.errors import DuplicateKeyError, PyMongoError
+    from datetime import timedelta
+
+    try:
+        locks.update_one({"_id": _MONGO_LOCK_ID},
+                         {"$setOnInsert": {"locked_until": datetime(1970, 1, 1, tzinfo=timezone.utc)}},
+                         upsert=True)
+    except DuplicateKeyError:
+        pass
+    except PyMongoError as e:
+        raise StorageError("Could not initialize the MongoDB transaction lock") from e
+
+    owner = uuid.uuid4().hex
+    deadline = time.monotonic() + 8
+    while time.monotonic() < deadline:
+        now = datetime.now(timezone.utc)
+        try:
+            lock = locks.find_one_and_update(
+                {"_id": _MONGO_LOCK_ID, "locked_until": {"$lt": now}},
+                {"$set": {"owner": owner, "locked_until": now + timedelta(seconds=60)}},
+                return_document=ReturnDocument.AFTER)
+        except PyMongoError as e:
+            raise StorageError("Could not acquire the MongoDB transaction lock") from e
+        if lock:
+            return owner
+        time.sleep(0.05)
+    raise StorageError("MongoDB is busy; please retry the operation")
+
+
+@contextmanager
+def _mongo_transaction(state, locks):
+    from pymongo.errors import PyMongoError
+
+    owner = _mongo_acquire(locks)
+    try:
+        db = _mongo_ensure(state)
+        yield db
+        state.replace_one({"_id": _MONGO_STATE_ID},
+                          {"_id": _MONGO_STATE_ID, "data": db}, upsert=True)
+    except PyMongoError as e:
+        raise StorageError("Could not save restaurant data to MongoDB Atlas") from e
+    finally:
+        try:
+            locks.update_one({"_id": _MONGO_LOCK_ID, "owner": owner},
+                             {"$set": {"locked_until": datetime(1970, 1, 1, tzinfo=timezone.utc)},
+                              "$unset": {"owner": ""}})
+        except PyMongoError:
+            pass  # The lease expires automatically if the function is interrupted.
+
+
 def load():
-    if DATABASE_URL or ON_VERCEL:
+    if USE_MONGODB:
+        state, _, _ = _mongo_collections()
+        return _mongo_ensure(state)
+    if USE_POSTGRES:
         psycopg, _ = _postgres_modules()
         try:
             with _connect() as conn:
@@ -113,7 +210,13 @@ def load():
 
 
 def save(db):
-    if DATABASE_URL or ON_VERCEL:
+    if USE_MONGODB:
+        state, locks, _ = _mongo_collections()
+        with _mongo_transaction(state, locks) as current:
+            current.clear()
+            current.update(db)
+        return
+    if USE_POSTGRES:
         psycopg, Jsonb = _postgres_modules()
         try:
             with _connect() as conn:
@@ -140,7 +243,12 @@ def save(db):
 @contextmanager
 def transaction():
     """Lock and save one DB snapshot atomically; failed operations are rolled back."""
-    if DATABASE_URL or ON_VERCEL:
+    if USE_MONGODB:
+        state, locks, _ = _mongo_collections()
+        with _mongo_transaction(state, locks) as db:
+            yield db
+        return
+    if USE_POSTGRES:
         psycopg, Jsonb = _postgres_modules()
         try:
             with _connect() as conn:
@@ -161,8 +269,8 @@ def transaction():
 
 
 def import_json_file(path, replace=False):
-    """Import an existing local JSON database into PostgreSQL."""
-    if not DATABASE_URL:
+    """Import an existing local JSON database into the configured remote database."""
+    if not USE_REMOTE_DB:
         raise StorageError("ตั้งค่า DATABASE_URL ก่อนนำเข้าฐานข้อมูล")
     try:
         with open(path, encoding="utf-8") as source:
@@ -189,6 +297,16 @@ def import_json_file(path, replace=False):
             row["id"] = log_id
         incoming.setdefault("seq", {})["logs"] = len(incoming["logs"])
 
+    if USE_MONGODB:
+        state, locks, _ = _mongo_collections()
+        with _mongo_transaction(state, locks) as current:
+            has_data = any(current.get(key) for key in COLLECTIONS) or current.get("seq")
+            if has_data and not replace:
+                raise StorageError("MongoDB already has data; pass --replace to overwrite it")
+            current.clear()
+            current.update(incoming)
+        return
+
     _, Jsonb = _postgres_modules()
     with _connect() as conn:
         _ensure_postgres(conn)
@@ -208,6 +326,16 @@ def save_upload(name, content, content_type):
                                              content_type=content_type, add_random_suffix=False)
         except Exception as e:
             raise StorageError("บันทึกรูปภาพลง Vercel Blob ไม่สำเร็จ") from e
+        return
+    if USE_MONGODB:
+        from pymongo.errors import PyMongoError
+        _, _, uploads = _mongo_collections()
+        try:
+            uploads.replace_one({"_id": name},
+                                {"_id": name, "data": bytes(content), "content_type": content_type},
+                                upsert=True)
+        except PyMongoError as e:
+            raise StorageError("Could not save the image to MongoDB Atlas") from e
         return
     if ON_VERCEL:
         raise StorageError("ตั้งค่า BLOB_READ_WRITE_TOKEN เพื่อบันทึกรูปภาพบน Vercel")
@@ -229,6 +357,19 @@ def upload_url(name):
         raise StorageError("อ่านรูปภาพจาก Vercel Blob ไม่สำเร็จ") from e
 
 
+def load_upload(name):
+    """Read an image stored in MongoDB; Vercel Blob images are served by URL instead."""
+    if not USE_MONGODB or BLOB_TOKEN:
+        return None
+    from pymongo.errors import PyMongoError
+    _, _, uploads = _mongo_collections()
+    try:
+        row = uploads.find_one({"_id": name}, {"data": 1, "content_type": 1})
+        return (row["data"], row.get("content_type", "application/octet-stream")) if row else None
+    except PyMongoError as e:
+        raise StorageError("Could not read the image from MongoDB Atlas") from e
+
+
 def next_id(db, coll):
     db["seq"][coll] = db["seq"].get(coll, 0) + 1
     return db["seq"][coll]
@@ -237,7 +378,7 @@ def next_id(db, coll):
 def take_rate_limit(key, limit, window):
     """Atomically consume a rate-limit slot across PostgreSQL-backed instances."""
     now = time.time()
-    if DATABASE_URL or ON_VERCEL:
+    if USE_REMOTE_DB or ON_VERCEL:
         with transaction() as db:
             buckets = db.setdefault("rate_limits", {})
             hits = [stamp for stamp in buckets.get(key, []) if now - stamp < window]
@@ -273,7 +414,7 @@ def take_rate_limit(key, limit, window):
 
 
 def clear_rate_limit(key):
-    if DATABASE_URL or ON_VERCEL:
+    if USE_REMOTE_DB or ON_VERCEL:
         with transaction() as db:
             db.setdefault("rate_limits", {}).pop(key, None)
         return

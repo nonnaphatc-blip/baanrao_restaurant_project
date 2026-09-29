@@ -5,7 +5,7 @@ import re
 import secrets
 import uuid
 
-from flask import Flask, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.exceptions import HTTPException
 
 import auth
@@ -52,10 +52,8 @@ def env_flag(name, default=False):
 
 app = Flask(__name__)
 is_production = bool(os.environ.get("VERCEL")) or os.environ.get("APP_ENV", "").lower() == "production"
-if is_production and not storage.DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is required in production; local JSON storage is not durable")
-if is_production and not storage.BLOB_TOKEN:
-    raise RuntimeError("BLOB_READ_WRITE_TOKEN is required in production for durable menu images")
+if is_production and not storage.USE_REMOTE_DB:
+    raise RuntimeError("Set DATABASE_URL or MONGODB_URI to persistent storage before starting in production")
 app.config.update(SECRET_KEY=load_secret(), SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",
                   SESSION_COOKIE_SECURE=env_flag("COOKIE_SECURE", is_production), MAX_CONTENT_LENGTH=2 * 1024 * 1024,
                   PERMANENT_SESSION_LIFETIME=8 * 3600)
@@ -242,6 +240,11 @@ def uploads(name):
     blob_url = storage.upload_url(name)
     if blob_url:
         return redirect(blob_url)
+    mongo_upload = storage.load_upload(name)
+    if mongo_upload:
+        content, content_type = mongo_upload
+        return Response(content, mimetype=content_type,
+                        headers={"Cache-Control": "public, max-age=3600"})
     return send_from_directory(storage.UPLOAD_DIR, name)
 
 

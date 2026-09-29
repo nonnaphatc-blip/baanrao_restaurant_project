@@ -1,5 +1,7 @@
 # Deploy BAANRAO on Vercel
 
+> If you are using the MongoDB Atlas integration already connected to Vercel, follow [MONGODB_ATLAS.md](MONGODB_ATLAS.md). The instructions below describe the PostgreSQL setup.
+
 The app uses local JSON files when run on a developer machine. On Vercel it uses PostgreSQL for restaurant data and Vercel Blob for menu images; it will report a configuration error rather than silently saving production data to Vercel's temporary filesystem.
 
 ## Connect persistent storage

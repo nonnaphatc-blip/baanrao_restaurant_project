@@ -10,7 +10,7 @@ LOG_FILE = os.path.join(storage.DATA_DIR, "audit.log")
 def log_action(user, action, entity, ref="", detail=""):
     row = {"ts": storage.now_str(), "user": user, "action": action,
            "entity": entity, "ref": str(ref), "detail": str(detail)[:300]}
-    if storage.DATABASE_URL or storage.ON_VERCEL:
+    if storage.USE_REMOTE_DB or storage.ON_VERCEL:
         try:
             with storage.transaction() as db:
                 logs = db.setdefault("logs", [])
@@ -29,7 +29,7 @@ def log_action(user, action, entity, ref="", detail=""):
 
 def read_logs():
     """Return all log rows, newest first."""
-    if storage.DATABASE_URL or storage.ON_VERCEL:
+    if storage.USE_REMOTE_DB or storage.ON_VERCEL:
         return list(reversed(storage.load().get("logs", [])))
     rows = []
     try:
