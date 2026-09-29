@@ -1,4 +1,4 @@
-"""Copy the local JSON database and menu images to PostgreSQL and Vercel Blob."""
+"""Copy the local JSON database and menu images to PostgreSQL or MongoDB and Vercel Blob."""
 import argparse
 import mimetypes
 import os

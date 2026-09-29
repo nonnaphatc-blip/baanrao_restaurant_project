@@ -52,8 +52,8 @@ def env_flag(name, default=False):
 
 app = Flask(__name__)
 is_production = bool(os.environ.get("VERCEL")) or os.environ.get("APP_ENV", "").lower() == "production"
-if is_production and not storage.DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is required in production; local JSON storage is not durable")
+if is_production and not storage.HAS_DATABASE:
+    raise RuntimeError("Set DATABASE_URL, POSTGRES_URL, or MONGODB_URI in production")
 if is_production and not storage.BLOB_TOKEN:
     raise RuntimeError("BLOB_READ_WRITE_TOKEN is required in production for durable menu images")
 app.config.update(SECRET_KEY=load_secret(), SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",

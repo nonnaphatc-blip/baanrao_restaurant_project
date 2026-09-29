@@ -3,15 +3,10 @@ name = "baanrao-restaurant"
 version = "1.0.0"
 requires-python = ">=3.12"
 dependencies = [
-<<<<<<< HEAD
   "Flask>=3.0",
   "psycopg[binary]>=3.2,<4",
   "vercel-sdk>=0.0.8,<0.1",
-=======
-    "Flask>=3.0",
-    "psycopg[binary]>=3.2,<4",
-    "vercel-sdk>=0.0.8,<0.1",
->>>>>>> f7f3309f2ccb3badf94bb470a5931f6219b5c9ac
+  "pymongo>=4.10,<5",
 ]
 
 [tool.vercel]
