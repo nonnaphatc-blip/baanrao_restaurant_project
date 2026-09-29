@@ -198,6 +198,10 @@ def _mongo_load():
         raise StorageError("Could not read restaurant data from MongoDB Atlas") from e
 
 
+def _mongo_uploads():
+    return _mongo_collection().database["restaurant_uploads"]
+
+
 def load():
     if MONGODB_URI:
         return _mongo_load()
@@ -363,6 +367,16 @@ def save_upload(name, content, content_type):
         except Exception as e:
             raise StorageError("บันทึกรูปภาพลง Vercel Blob ไม่สำเร็จ") from e
         return
+    if MONGODB_URI:
+        from pymongo.errors import PyMongoError
+        try:
+            _mongo_uploads().replace_one(
+                {"_id": name}, {"_id": name, "content": bytes(content), "content_type": content_type},
+                upsert=True,
+            )
+        except PyMongoError as e:
+            raise StorageError("Could not save image to MongoDB Atlas") from e
+        return
     if ON_VERCEL:
         raise StorageError("ตั้งค่า BLOB_READ_WRITE_TOKEN เพื่อบันทึกรูปภาพบน Vercel")
     try:
@@ -381,6 +395,19 @@ def upload_url(name):
         return BlobClient(token=BLOB_TOKEN).head(f"uploads/{name}").url
     except Exception as e:
         raise StorageError("อ่านรูปภาพจาก Vercel Blob ไม่สำเร็จ") from e
+
+
+def read_upload(name):
+    if not MONGODB_URI:
+        return None
+    from pymongo.errors import PyMongoError
+    try:
+        item = _mongo_uploads().find_one({"_id": name}, {"content": 1, "content_type": 1})
+        if item is None:
+            return None
+        return bytes(item["content"]), item.get("content_type") or "application/octet-stream"
+    except PyMongoError as e:
+        raise StorageError("Could not read image from MongoDB Atlas") from e
 
 
 def next_id(db, coll):
