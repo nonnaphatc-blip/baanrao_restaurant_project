@@ -8,8 +8,15 @@
     <h1>เข้ารหัสโต๊ะ</h1>
     <p class="muted">กรอกรหัส 6 หลักที่ได้รับจากโต๊ะหรือพนักงาน เพื่อเปิดหน้าสั่งอาหาร</p>
     {% if expired %}<p class="err">เซสชันโต๊ะก่อนหน้าสิ้นสุดแล้ว กรุณาใส่รหัสโต๊ะอีกครั้ง</p>{% endif %}
-    <label>รหัสโต๊ะ<input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="one-time-code" required autofocus></label>
+    <label>รหัสโต๊ะ<input id="tableCode" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="one-time-code" required autofocus></label>
     <button class="btn primary">เข้าสู่โต๊ะ</button>
+    <button class="btn" id="startQrScan" type="button">สแกน QR ด้วยกล้อง</button>
+    <div id="qrScanner" class="qr-scanner" hidden>
+      <video id="qrVideo" class="qr-video" playsinline muted aria-label="ภาพจากกล้องสำหรับสแกน QR"></video>
+      <p id="qrScanStatus" class="muted" role="status" aria-live="polite">กำลังเตรียมกล้อง...</p>
+      <button class="btn sm" id="stopQrScan" type="button">ปิดกล้อง</button>
+    </div>
   </form>
 </section>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='table_code.js') }}"></script>{% endblock %}

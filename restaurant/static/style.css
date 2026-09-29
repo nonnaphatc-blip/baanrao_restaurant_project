@@ -97,6 +97,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:.88rem}
 .lines.sum{border-top:1px dashed var(--ink)}
 .lines .tot td{font-weight:800;font-size:1.1rem;border-top:1px solid var(--ink)}
 .qr{display:block;margin:auto;width:220px;height:220px;image-rendering:pixelated}
+.qr-scanner{display:grid;gap:.65rem;justify-items:center;text-align:center}.qr-scanner[hidden]{display:none}.qr-video{width:min(100%,360px);max-height:55vh;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#171717}.qr-scanner p{margin:0}
 @media print{.nav,.noprint,#toasts{display:none!important}body{background:#fff}.card{border:none}.modal::backdrop{display:none}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .auto{width:auto}.mt{margin-top:1rem}.scroll{max-height:80vh;overflow:auto}.narrow{max-width:480px}.w6{width:6rem}
