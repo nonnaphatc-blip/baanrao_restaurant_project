@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}ใบเสร็จ {{ bill.receipt_no }}{% endblock %}
+{% block content %}
+<section class="wrap"><div class="card receipt stack">
+  <h2 class="c">{{ brand }}</h2>
+  <p class="muted c">ใบเสร็จรับเงิน {{ bill.receipt_no }}<br>{{ bill.created_at }} · โต๊ะ {{ bill.table_name }} · แคชเชียร์ {{ bill.cashier }}</p>
+  <table class="lines">
+    {% for i in bill['items'] %}<tr><td>{{ i.name }}{% if i.options %}<br><small>{{ i.options }}</small>{% endif %}</td><td>{{ i.qty }} {{ i.unit or 'จาน' }}</td><td class="right">{{ '%.2f'|format(i.amount) }}</td></tr>{% endfor %}
+  </table>
+  <table class="lines sum">
+    <tr><td>รวม</td><td class="right">{{ '%.2f'|format(bill.subtotal) }}</td></tr>
+    {% if bill.discount %}<tr><td>ส่วนลด</td><td class="right">-{{ '%.2f'|format(bill.discount) }}</td></tr>{% endif %}
+    {% if bill.redeem %}<tr><td>ใช้แต้ม</td><td class="right">-{{ bill.redeem }}.00</td></tr>{% endif %}
+    <tr><td>ค่าบริการ {{ bill.service_rate }}%</td><td class="right">{{ '%.2f'|format(bill.service) }}</td></tr>
+    <tr><td>VAT {{ bill.vat_rate }}%</td><td class="right">{{ '%.2f'|format(bill.vat) }}</td></tr>
+    <tr class="tot"><td>ยอดสุทธิ</td><td class="right">{{ '%.2f'|format(bill.total) }}</td></tr>
+  </table>
+  <p class="muted c">ชำระด้วย {{ {'cash':'เงินสด','card':'บัตร','qr':'QR'}[bill.method] }}{% if bill.member %} · สมาชิก {{ bill.member }} ได้รับ {{ bill.earned }} แต้ม{% endif %}<br>ขอบคุณที่มาใช้บริการ</p>
+  <button class="btn primary noprint" data-print>พิมพ์ใบเสร็จ</button>
+</div></section>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}จัดการระบบ · {{ brand }}{% endblock %}
+{% block content %}
+<section class="wrap">
+  <nav class="tabs" id="tabs"></nav>
+  <div id="view"></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='qrcode.js') }}"></script><script src="{{ url_for('static', filename='admin.js') }}"></script>{% endblock %}

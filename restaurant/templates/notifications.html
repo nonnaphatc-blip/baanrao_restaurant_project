@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}การแจ้งเตือน · {{ brand }}{% endblock %}
+{% block content %}
+<section class="wrap">
+  <div class="row between"><div><span class="tag">สำหรับพนักงาน</span><h1>การแจ้งเตือน</h1></div></div>
+  <div id="notificationList" class="stack mt"><p class="muted">กำลังโหลดการแจ้งเตือน…</p></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='notifications.js') }}"></script>{% endblock %}

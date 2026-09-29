@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}เมนูขายดี · {{ brand }}{% endblock %}
+{% block content %}
+<section class="wrap">
+  <span class="tag">BAANRAO</span>
+  <h1>เมนูขายดี</h1>
+  <p class="muted">จัดอันดับจากจำนวนที่ขายได้ในใบเสร็จทั้งหมด</p>
+  {% if top %}
+  <div class="grid mt">
+    {% for item in top %}
+      {% set menu_item = menu_by_id.get(item.menu_id) if item.menu_id is not none else menu_by_name_unit.get(item.name, {}).get(item.unit, menu_by_name.get(item.name)) %}
+      <article class="card item static">
+        {% if menu_item and menu_item.image %}<img src="/uploads/{{ menu_item.image }}" alt="{{ item.name }}">{% else %}<div class="ph">🍽</div>{% endif %}
+        <span class="pill ok">อันดับ {{ loop.index }}</span>
+        <b>{{ item.name }}</b>
+        {% if menu_item %}<span>฿{{ '%.2f'|format(menu_item.price) }} / {{ item.unit }}</span>
+        {% else %}<span class="muted">ราคาเฉลี่ยที่ขาย ฿{{ '%.2f'|format(item.avg_price) }} / {{ item.unit }}</span>{% endif %}
+        <small class="muted">ขายแล้ว {{ item.qty }} {{ item.unit }}</small>
+        {% if menu_item and menu_item.description %}<small class="muted">{{ menu_item.description }}</small>{% endif %}
+      </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card mt"><p>ยังไม่มีข้อมูลยอดขาย เมนูขายดีจะแสดงหลังมีการปิดบิล</p><a class="btn" href="/">ดูเมนูทั้งหมด</a></div>
+  {% endif %}
+</section>
+{% endblock %}

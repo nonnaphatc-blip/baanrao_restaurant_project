@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}POS · {{ brand }}{% endblock %}
+{% block content %}
+<section class="wrap pos">
+  <div><h2>โต๊ะ</h2><div id="tables" class="grid tables"></div></div>
+  <aside id="panel" class="card stack" hidden></aside>
+</section>
+<dialog id="menuDlg" class="modal wide"><form method="dialog" class="row between"><h3>เลือกเมนู</h3><button class="btn sm">ปิด</button></form><div id="menuBox" class="stack"></div></dialog>
+<dialog id="payDlg" class="modal"><div id="payBox" class="stack"></div></dialog>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='pos.js') }}"></script>{% endblock %}

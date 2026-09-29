@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}ครัว · {{ brand }}{% endblock %}
+{% block content %}
+<section class="wrap">
+  <div class="row between"><h2>หน้าจอครัว</h2>
+    <div class="row" id="filters">
+      <button class="btn sm on" data-act="filter" data-f="all">ทั้งหมด</button>
+      <button class="btn sm" data-act="filter" data-f="pending">รอทำ</button>
+      <button class="btn sm" data-act="filter" data-f="cooking">กำลังทำ</button>
+      <button class="btn sm" data-act="filter" data-f="ready">พร้อมเสิร์ฟ</button>
+    </div></div>
+  <div id="tickets" class="grid"></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='kitchen.js') }}"></script>{% endblock %}

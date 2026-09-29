@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf" content="{{ csrf_token() }}">
+<title>{% block title %}{{ brand }}{% endblock %}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;800&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-role="{{ user.role if user else '' }}">
+<header class="nav">
+  <a class="brand" href="{% if user and user.role == 'admin' %}/admin{% elif user and user.role == 'cashier' %}/pos{% elif user and user.role == 'kitchen' %}/kitchen{% else %}/{% endif %}">◐ {{ brand }}</a>
+  <nav>
+    {% if not user or user.role == 'customer' %}<a href="/table-code">เข้ารหัสโต๊ะ</a><a href="/reserve">จองโต๊ะ</a><a href="/popular">เมนูขายดี</a>{% endif %}
+    {% if user %}
+      {% if user.role == 'admin' %}<a href="/admin">แดชบอร์ด</a><a href="/pos">POS</a><a href="/kitchen">ครัว</a>
+      {% elif user.role == 'cashier' %}<a href="/pos">POS</a><a href="/admin">จองโต๊ะ / คิว</a><a href="/kitchen">ครัว</a>
+      {% elif user.role == 'kitchen' %}<a href="/kitchen">ครัว</a>{% endif %}
+{% if user.role in ('admin', 'cashier', 'kitchen') %}<a class="notification-link" href="/notifications">การแจ้งเตือน<span class="notification-dot" id="notificationDot" hidden></span></a>{% endif %}
+      <a href="/change-password">เปลี่ยนรหัสผ่าน</a>
+      <span class="chip">{{ user.name }}{% if user.role == 'customer' %} · {{ user.points }} แต้ม{% endif %}</span>
+      <form method="post" action="/logout"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button class="btn sm">ออกจากระบบ</button></form>
+    {% else %}
+      <a class="btn sm" href="/login">เข้าสู่ระบบ</a><a class="btn primary sm" href="/register">สมัครสมาชิก</a>
+    {% endif %}
+  </nav>
+</header>
+<main>{% block content %}{% endblock %}</main>
+<div id="toasts"></div>
+<button class="theme-switch" id="themeToggle" type="button" aria-label="เปลี่ยนเป็นโหมดมืด" aria-pressed="false" title="เปลี่ยนธีม">
+  <span class="theme-switch-thumb" aria-hidden="true">☀</span>
+</button>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

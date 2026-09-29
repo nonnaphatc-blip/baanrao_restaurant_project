@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}สมัครสมาชิก · {{ brand }}{% endblock %}
+{% block content %}
+<form class="card stack auth" method="post" action="/register">
+  <h2>สมัครสมาชิก</h2>
+  {% if error %}<p class="err">{{ error }}</p>{% endif %}
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label>ชื่อผู้ใช้<input name="username" required pattern="[A-Za-z0-9_]{3,20}" title="a-z, 0-9, _ ยาว 3-20 ตัว" autocomplete="username"></label>
+  <label>ชื่อที่แสดง<input name="name" required maxlength="50"></label>
+  <label>เบอร์โทร (ไม่บังคับ)<input name="phone" inputmode="tel" pattern="\+?[0-9\-]{8,15}"></label>
+  <label>รหัสผ่าน (8+ ตัว มีตัวอักษรและตัวเลข)<input type="password" name="password" required minlength="8" maxlength="100" autocomplete="new-password"></label>
+  <label>ยืนยันรหัสผ่าน<input type="password" name="confirm" required autocomplete="new-password"></label>
+  <button class="btn primary">สมัครสมาชิก</button>
+  <p class="muted">มีบัญชีแล้ว? <a href="/login">เข้าสู่ระบบ</a></p>
+</form>
+{% endblock %}

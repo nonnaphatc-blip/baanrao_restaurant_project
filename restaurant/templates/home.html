@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <span class="tag">สั่งง่าย จองสะดวก สะสมแต้ม</span>
+  <h1>Good Food<br>Good Taste</h1>
+  <p class="lead">อาหารร้อน ๆ ที่โต๊ะคุณ จองโต๊ะล่วงหน้า รับคิวออนไลน์ และสะสมแต้มทุกครั้งที่มาทาน</p>
+  <div class="row center"><a class="btn primary" href="/reserve">จองโต๊ะ</a><a class="btn" href="#menu">ดูเมนู</a><a class="btn" href="/popular">เมนูขายดี</a></div>
+</section>
+
+<section class="wrap" id="menu">
+  <h2>เมนูของเรา</h2>
+  {% for c in categories %}
+    <h3 class="cat">{{ c.name }}</h3>
+    <div class="grid">
+      {% for m in menu if m.category_id == c.id %}
+      <article class="card item static">
+        {% if m.image %}<img src="/uploads/{{ m.image }}" alt="{{ m.name }}">{% else %}<div class="ph">🍽</div>{% endif %}
+        <b>{{ m.name }}</b>
+        <span>฿{{ '%.2f'|format(m.price) }} / {{ m.unit or 'จาน' }}</span>
+        {% if m.description %}<small class="muted">{{ m.description }}</small>{% endif %}
+        {% if not m.available %}<em class="pill bad">หมด</em>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

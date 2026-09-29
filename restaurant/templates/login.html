@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}เข้าสู่ระบบ · {{ brand }}{% endblock %}
+{% block content %}
+<form class="card stack auth" method="post" action="/login">
+  <h2>เข้าสู่ระบบ</h2>
+  {% if error %}<p class="err">{{ error }}</p>{% endif %}
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  <label>ชื่อผู้ใช้<input name="username" required maxlength="20" autocomplete="username"></label>
+  <label>รหัสผ่าน<input type="password" name="password" required maxlength="100" autocomplete="current-password"></label>
+  <button class="btn primary">เข้าสู่ระบบ</button>
+  <p class="muted">ยังไม่มีบัญชี? <a href="/register">สมัครสมาชิก</a></p>
+</form>
+{% endblock %}
