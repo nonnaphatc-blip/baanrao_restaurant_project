@@ -1,4 +1,4 @@
-"""Copy the local JSON database and menu images to PostgreSQL or MongoDB and Vercel Blob."""
+"""Copy the local JSON database and menu images to PostgreSQL and Vercel Blob."""
 import argparse
 import mimetypes
 import os
@@ -18,7 +18,7 @@ def main():
     if os.path.isdir(upload_dir):
         images = [name for name in os.listdir(upload_dir)
                   if re.fullmatch(r"[a-f0-9]{32}\.(png|jpg|jpeg|webp)", name)]
-    if images and not storage.BLOB_TOKEN and not storage.MONGODB_URI:
+    if images and not storage.BLOB_TOKEN:
         raise SystemExit("ตั้งค่า BLOB_READ_WRITE_TOKEN ก่อน เพื่อย้ายรูปเมนูไป Vercel Blob")
 
     for name in images:
