@@ -50,8 +50,37 @@ const ENT = {
 const TABS = role === 'admin'
   ? [['dashboard', 'แดชบอร์ด'], ['menu', 'เมนู'], ['categories', 'หมวดหมู่'], ['tables', 'โต๊ะ'], ['ingredients', 'สต็อก'], ['users', 'ผู้ใช้'],
      ['reservations', 'จองโต๊ะ'], ['queue', 'คิว'], ['logs', 'Log'], ['settings', 'ตั้งค่า']]
-  : [['reservations', 'จองโต๊ะ'], ['queue', 'คิว']];
+  : [['tables', 'โต๊ะ'], ['reservations', 'จองโต๊ะ'], ['queue', 'คิว']];
 let S = {};
+let tableStatusTimer = null;
+
+async function cashierTablesView() {
+  $('#view').innerHTML = `<div class="row toolbar"><input type="search" id="tableAccessSearch" class="grow" placeholder="ค้นหาโต๊ะ..."></div>
+    <div id="tableAccessList"></div>`;
+  const draw = (tables, query) => {
+    const rows = tables.filter(t => t.name.toLowerCase().includes(query.trim().toLowerCase()));
+    $('#tableAccessList').innerHTML = `<div class="tblwrap"><table class="tbl"><thead><tr>
+      <th>#</th><th>ชื่อโต๊ะ</th><th>ที่นั่ง</th><th>สถานะ</th><th>รหัสโต๊ะ</th><th></th>
+      </tr></thead><tbody>${rows.map(t => `<tr><td>${t.id}</td><td><b>${esc(t.name)}</b></td><td>${t.seats}</td>
+      <td>${FMT.lbl(t.status)}</td><td><b>${esc(t.access_code || '—')}</b></td>
+      <td class="right"><button class="btn sm" data-act="qr" data-id="${t.id}">แสดง QR</button></td></tr>`).join('') ||
+      '<tr><td colspan="6" class="muted">ไม่พบโต๊ะ</td></tr>'}</tbody></table></div>`;
+  };
+  const refresh = async () => {
+    const tables = (await api('/api/tables')).tables;
+    if (S.ent !== 'tables') return;
+    if (tables.some(t => !t.qr_token || !t.access_code)) {
+      throw new Error('ข้อมูล QR และรหัสโต๊ะยังโหลดไม่ครบ กรุณารีสตาร์ทเซิร์ฟเวอร์แล้วลองใหม่');
+    }
+    S.rows = tables;
+    draw(tables, $('#tableAccessSearch')?.value || '');
+  };
+  $('#tableAccessSearch').oninput = e => draw(S.rows, e.target.value);
+  await refresh();
+  tableStatusTimer = setInterval(() => {
+    if (!document.hidden && S.ent === 'tables' && !$('dialog[open]')) refresh().catch(() => {});
+  }, 2500);
+}
 
 async function loadLookups() {
   L.categories = (await api('/api/menu')).categories;
@@ -96,10 +125,13 @@ async function settingsView() {
 
 // ---------- generic list ----------
 async function openTab(t) {
+  if (tableStatusTimer !== null) clearInterval(tableStatusTimer);
+  tableStatusTimer = null;
   S = {ent: t, q: '', filter: '', sort: '', order: 'asc', page: 1, rows: []};
   $$('#tabs .btn').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'dashboard') return dash(new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Bangkok'}));
   if (t === 'settings') return settingsView();
+  if (t === 'tables' && role === 'cashier') return cashierTablesView();
   const cfg = ENT[t];
   $('#view').innerHTML = `<div class="row toolbar"><input type="search" id="q" class="grow" placeholder="ค้นหา${esc(cfg.title)}...">
     ${cfg.filter ? `<select id="f"><option value="">ทุกสถานะ</option>${cfg.filter[1].map(([v, l]) => `<option value="${cfg.filter[0]}:${esc(v)}">${esc(l)}</option>`).join('')}</select>` : ''}
@@ -108,6 +140,11 @@ async function openTab(t) {
   $('#q').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { S.q = e.target.value; S.page = 1; run(list); }, 300); };
   if ($('#f')) $('#f').onchange = e => { S.filter = e.target.value; S.page = 1; run(list); };
   await list();
+  if (t === 'tables' && role === 'admin') {
+    tableStatusTimer = setInterval(() => {
+      if (!document.hidden && S.ent === 'tables' && !$('dialog[open]')) run(list);
+    }, 2500);
+  }
 }
 
 async function list() {

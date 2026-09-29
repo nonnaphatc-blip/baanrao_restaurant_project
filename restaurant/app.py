@@ -257,7 +257,15 @@ def api_menu():
 @app.get("/api/tables")
 @role_required(*auth.STAFF)
 def api_tables():
-    return ok(tables=services.tables_view(storage.load()))
+    db = storage.load()
+    tables = services.tables_view(db)
+    if g.user["role"] in ("admin", "cashier"):
+        by_id = {table["id"]: table for table in db["tables"]}
+        for table in tables:
+            source = by_id[table["id"]]
+            table["qr_token"] = source["qr_token"]
+            table["access_code"] = source["access_code"]
+    return ok(tables=tables)
 
 
 @app.patch("/api/tables/<int:table_id>")

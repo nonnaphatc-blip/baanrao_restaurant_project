@@ -183,3 +183,15 @@
 {"ts": "2026-09-29 17:17:59", "user": "Administator", "action": "logout", "entity": "auth", "ref": "", "detail": ""}
 {"ts": "2026-09-29 17:18:07", "user": "Administator", "action": "login", "entity": "auth", "ref": "", "detail": ""}
 {"ts": "2026-09-29 17:18:20", "user": "Administator", "action": "checkout", "entity": "bills", "ref": "6", "detail": "R20260929-0006 T1 ฿70.62 (cash)"}
+{"ts": "2026-09-29 22:21:15", "user": "Administator", "action": "logout", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:21:17", "user": "CashierUser1", "action": "login", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:21:39", "user": "CashierUser1", "action": "logout", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:21:41", "user": "Administator", "action": "login", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:26:58", "user": "Administator", "action": "logout", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:27:01", "user": "CashierUser1", "action": "login", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:33:08", "user": "CashierUser1", "action": "logout", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:33:11", "user": "Administator", "action": "login", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:33:58", "user": "Administator", "action": "logout", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:34:01", "user": "CashierUser1", "action": "login", "entity": "auth", "ref": "", "detail": ""}
+{"ts": "2026-09-29 22:58:50", "user": "CashierUser1", "action": "delete", "entity": "queue", "ref": "4", "detail": "Manee"}
+{"ts": "2026-09-29 23:12:57", "user": "CashierUser1", "action": "checkout", "entity": "bills", "ref": "7", "detail": "R20260929-0007 T1 ฿105.93 (cash)"}

@@ -212,8 +212,8 @@
    "name": "T1",
    "seats": 4,
    "status": "free",
-   "qr_token": "e27c736da7cef9fa5edbb6ef3f1bfca2",
-   "access_code": "416318"
+   "qr_token": "caf99789f236c0c55829d636b9b53d48",
+   "access_code": "492710"
   },
   {
    "id": 2,
@@ -632,6 +632,32 @@
    ],
    "status": "paid",
    "created_at": "2026-09-29 14:33:26"
+  },
+  {
+   "id": 7,
+   "table_id": 1,
+   "items": [
+    {
+     "id": 22,
+     "menu_id": 3,
+     "name": "ผัดไทยกุ้งสด",
+     "price": 90.0,
+     "extra": 0.0,
+     "qty": 1,
+     "unit": "จาน",
+     "options": {
+      "spice": "ไม่เผ็ด",
+      "size": "ธรรมดา"
+     },
+     "note": "",
+     "status": "served",
+     "created_at": "2026-09-29 23:12:42",
+     "source": "customer",
+     "paid": true
+    }
+   ],
+   "status": "paid",
+   "created_at": "2026-09-29 23:12:42"
   }
  ],
  "bills": [
@@ -921,21 +947,42 @@
    "created_at": "2026-09-29 17:18:20",
    "date": "2026-09-29",
    "receipt_no": "R20260929-0006"
+  },
+  {
+   "id": 7,
+   "order_id": 7,
+   "table_id": 1,
+   "table_name": "T1",
+   "items": [
+    {
+     "menu_id": 3,
+     "name": "ผัดไทยกุ้งสด",
+     "options": "ไม่เผ็ด · ธรรมดา",
+     "qty": 1,
+     "unit": "จาน",
+     "price": 90.0,
+     "amount": 90.0
+    }
+   ],
+   "subtotal": 90.0,
+   "discount": 0.0,
+   "redeem": 0,
+   "service": 9.0,
+   "vat": 6.93,
+   "total": 105.93,
+   "vat_rate": 7.0,
+   "service_rate": 10.0,
+   "method": "cash",
+   "member": "",
+   "earned": 0,
+   "cashier": "CashierUser1",
+   "created_at": "2026-09-29 23:12:57",
+   "date": "2026-09-29",
+   "receipt_no": "R20260929-0007"
   }
  ],
  "reservations": [],
- "queue": [
-  {
-   "name": "Manee",
-   "phone": "00000000",
-   "party": 2,
-   "status": "seated",
-   "created_at": "2026-09-24 23:12:56",
-   "date": "2026-09-24",
-   "number": 1,
-   "id": 4
-  }
- ],
+ "queue": [],
  "ingredients": [
   {
    "id": 1,
@@ -962,7 +1009,7 @@
    "id": 4,
    "name": "กุ้ง",
    "unit": "ตัว",
-   "stock": 153.0,
+   "stock": 148.0,
    "min_stock": 30.0
   },
   {
@@ -1275,6 +1322,24 @@
    "target": "staff",
    "text": "T1: กะเพราหมูสับ พร้อมเสิร์ฟ",
    "at": "2026-09-29 17:18:14"
+  },
+  {
+   "id": 49,
+   "target": "kitchen",
+   "text": "T1: ผัดไทยกุ้งสด x1",
+   "at": "2026-09-29 23:12:42"
+  },
+  {
+   "id": 50,
+   "target": "staff",
+   "text": "T1 ขอเช็คบิล",
+   "at": "2026-09-29 23:12:44"
+  },
+  {
+   "id": 51,
+   "target": "staff",
+   "text": "T1: ผัดไทยกุ้งสด พร้อมเสิร์ฟ",
+   "at": "2026-09-29 23:12:54"
   }
  ],
  "seq": {
@@ -1284,10 +1349,10 @@
   "menu": 7,
   "tables": 6,
   "queue": 4,
-  "events": 48,
-  "orders": 6,
-  "items": 21,
-  "bills": 6
+  "events": 51,
+  "orders": 7,
+  "items": 22,
+  "bills": 7
  },
  "settings": {
   "vat": 7.0,
@@ -1374,11 +1439,11 @@
    "read_ids": [],
    "created_at": 1790667183.6779602
   },
-  "ScY8YwqJ4j04I2a6Aw9TtnyRvbTEZ1G3": {
-   "user_id": 1,
-   "start_event_id": 47,
+  "OrmALgwbuTnlm-Wj2u9_eAxA9KRXLxc9": {
+   "user_id": 3,
+   "start_event_id": 48,
    "read_ids": [],
-   "created_at": 1790677087.6825047
+   "created_at": 1790696041.02904
   }
  },
  "logs": [],
