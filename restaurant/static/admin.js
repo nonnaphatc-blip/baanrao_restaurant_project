@@ -182,6 +182,17 @@ function formDialog(ent, row) {
   d.addEventListener('close', () => d.remove());
   $('form', d).onsubmit = async e => {
     e.preventDefault();
+    const form = e.currentTarget;
+    const saveButton = $('button.primary', form);
+    const imageInputs = $$('[data-up]', form);
+    if (imageInputs.some(input => input.dataset.uploading === 'true')) {
+      $('#ferr', d).textContent = 'กำลังอัปโหลดรูป กรุณารอสักครู่';
+      return;
+    }
+    if (imageInputs.some(input => input.dataset.uploadFailed === 'true')) {
+      $('#ferr', d).textContent = 'อัปโหลดรูปไม่สำเร็จ กรุณาเลือกรูปใหม่แล้วรอให้อัปโหลดเสร็จก่อนบันทึก';
+      return;
+    }
     const body = {};
     for (const [k, , t] of cfg.fields) {
       if (t === 'recipe') body[k] = $$('.rec', d).map(r => ({ingredient_id: $('select', r).value, qty: $('input', r).value}));
@@ -189,10 +200,16 @@ function formDialog(ent, row) {
       else body[k] = $(`[name="${k}"]`, d).value;
     }
     try {
+      form.dataset.saving = 'true';
+      saveButton.disabled = true;
       await api(`/api/admin/${ent}${row ? '/' + row.id : ''}`, row ? 'PUT' : 'POST', body);
       d.close(); toast('บันทึกแล้ว');
       await loadLookups(); await list();
     } catch (err) { $('#ferr', d).textContent = err.message; }
+    finally {
+      delete form.dataset.saving;
+      saveButton.disabled = imageInputs.some(input => input.dataset.uploading === 'true');
+    }
   };
   d.showModal();
 }
@@ -202,12 +219,27 @@ document.addEventListener('change', e => {
   if (!f || !f.files[0]) return;
   const dlg = f.closest('dialog');
   (async () => {
+    const form = f.closest('form');
+    const saveButton = $('button.primary', form);
+    const note = $('.up-note', f.parentElement);
+    f.dataset.uploading = 'true';
+    f.dataset.uploadFailed = 'false';
+    saveButton.disabled = true;
+    $('#ferr', dlg).textContent = '';
+    if (note) note.textContent = 'กำลังอัปโหลดรูป...';
     try {
       const fd = new FormData(); fd.append('file', f.files[0]);
       const r = await api('/api/admin/upload', 'POST', fd);
       $(`[name="${f.dataset.up}"]`, dlg).value = r.name;
-      $('.up-note', dlg).textContent = 'อัปโหลดแล้ว';
-    } catch (err) { $('#ferr', dlg).textContent = err.message; }
+      if (note) note.textContent = 'อัปโหลดรูปแล้ว';
+    } catch (err) {
+      f.dataset.uploadFailed = 'true';
+      if (note) note.textContent = 'อัปโหลดไม่สำเร็จ กรุณาเลือกรูปใหม่';
+      $('#ferr', dlg).textContent = err.message;
+    } finally {
+      delete f.dataset.uploading;
+      saveButton.disabled = form.dataset.saving === 'true' || $$('[data-up]', form).some(input => input.dataset.uploading === 'true');
+    }
   })();
 });
 
