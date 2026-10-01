@@ -9,6 +9,35 @@ import storage
 from storage import AppError
 
 
+def read_password(prompt):
+    """Read a password with visible masking in Windows terminals."""
+    if os.name != "nt":
+        return getpass.getpass(prompt)
+
+    import msvcrt
+
+    print(prompt, end="", flush=True)
+    password = []
+    while True:
+        char = msvcrt.getwch()
+        if char in ("\r", "\n"):
+            print()
+            return "".join(password)
+        if char == "\003":
+            raise KeyboardInterrupt
+        if char in ("\b", "\x7f"):
+            if password:
+                password.pop()
+                print("\b \b", end="", flush=True)
+            continue
+        if char in ("\x00", "\xe0"):
+            msvcrt.getwch()
+            continue
+        if char.isprintable():
+            password.append(char)
+            print("*", end="", flush=True)
+
+
 def show_menu():
     print("\n=== BAANRAO Console ===")
     print("1) สรุปยอดขายวันนี้")
@@ -33,7 +62,7 @@ def cmd_users():
 
 def cmd_reset():
     username = input("ชื่อผู้ใช้: ").strip()
-    password = getpass.getpass("รหัสผ่านใหม่: ")
+    password = read_password("รหัสผ่านใหม่: ")
     auth.check_password_policy(password)
     with storage.transaction() as db:
         user = auth.find_user(db, username)

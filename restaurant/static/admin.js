@@ -93,7 +93,7 @@ async function dash(date) {
   const d = (await api('/api/admin/dashboard?date=' + date)).dashboard;
   const max = Math.max(1, ...d.week.map(w => w.sales));
   const methods = {cash: 'เงินสด', card: 'บัตร', qr: 'QR'};
-  $('#view').innerHTML = `<div class="row between"><h2>สรุปยอดขายรายวัน</h2><input type="date" id="dd" value="${d.date}" class="auto"></div>
+  $('#view').innerHTML = `<div class="dashboard-header"><h2>สรุปยอดขายรายวัน</h2><div class="dashboard-actions"><input type="date" id="dd" value="${d.date}" class="auto"><a class="btn primary" href="/api/admin/dashboard/export?date=${d.date}">ดาวน์โหลด CSV 30 วัน</a></div></div>
     <div class="grid kpi">
       <div class="card"><small class="muted">ยอดขาย</small><h2>฿${baht(d.sales)}</h2></div>
       <div class="card"><small class="muted">จำนวนบิล</small><h2>${d.bills}</h2></div>

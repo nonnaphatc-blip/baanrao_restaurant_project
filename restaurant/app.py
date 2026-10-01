@@ -1,9 +1,12 @@
 """Restaurant system - Flask entry point (also the Vercel entry point)."""
 import hmac
+import csv
+import io
 import os
 import re
 import secrets
 import uuid
+from datetime import datetime, timedelta
 
 from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.exceptions import HTTPException
@@ -422,6 +425,27 @@ def entity_or_404(name):
 def api_dashboard():
     date = services.valid_date(request.args.get("date")) or storage.today_str()
     return ok(dashboard=services.dashboard(storage.load(), date))
+
+
+@app.get("/api/admin/dashboard/export")
+@role_required("admin")
+def api_dashboard_export():
+    end_date = services.valid_date(request.args.get("date")) or storage.today_str()
+    end_day = datetime.strptime(end_date, "%Y-%m-%d")
+    db = storage.load()
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(("วันที่", "จำนวนบิล", "ยอดขาย (บาท)", "เฉลี่ยต่อบิล (บาท)",
+                     "เงินสด (บาท)", "บัตร (บาท)", "QR (บาท)"))
+    for offset in range(29, -1, -1):
+        day = (end_day - timedelta(days=offset)).strftime("%Y-%m-%d")
+        report = services.daily_report(db, day)
+        methods = report["methods"]
+        writer.writerow((day, report["bills"], report["sales"], report["avg"],
+                         methods.get("cash", 0), methods.get("card", 0), methods.get("qr", 0)))
+    filename = f"dashboard-{end_date}-30-days.csv"
+    return Response("\ufeff" + output.getvalue(), content_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
 @app.get("/api/admin/logs")

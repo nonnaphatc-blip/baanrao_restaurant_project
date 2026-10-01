@@ -8,14 +8,15 @@
    "role": "admin",
    "active": true,
    "points": 100000,
-   "password_hash": "scrypt$4c81930f9593efec8c058936135e717a$841990258cf5743401cb37628a309682f41ffe2a6922c13cf6ef15e93a0ad7c5cd2efdb3411a10af2a5762acb88da805e1e6d7f99a705a39dff9cd6e8e2c810b"
+   "password_hash": "scrypt$b09a398c680d94ba8b1921c45a7949ca$9968b88290edd52fbb29b2639f1d8409f89f601e5d0d06f8f4b064ff1318903fa4ef536d822bc7e389f95073e787748cb6e3ef2df4e931084d3ffefd4a3e6a7b",
+   "session_version": 1
   },
   {
    "id": 2,
    "username": "Nonnaphatzaza",
    "name": "นายไก่กะป๊อกๆ",
    "phone": "",
-   "role": "customer",
+   "role": "admin",
    "active": true,
    "points": 0,
    "password_hash": "scrypt$646a56364f3fe2379d7bd3d25ec6fafa$1beb66af383b46b8e945b5213d03aac11ea13e583acbbaec7202e54ee0321febad824281aa12e59b1fdda54ce6f796f3589de686ac0e71a5761545bf9a18558a",
@@ -1444,6 +1445,12 @@
    "start_event_id": 48,
    "read_ids": [],
    "created_at": 1790696041.02904
+  },
+  "3aNwKxbS-wUdPM4H69ccAJFkjYgsJyDX": {
+   "user_id": 2,
+   "start_event_id": 51,
+   "read_ids": [],
+   "created_at": 1790865011.1287818
   }
  },
  "logs": [],

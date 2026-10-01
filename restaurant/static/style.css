@@ -189,6 +189,18 @@ html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="
 html[data-theme="light"] .tbl th{background:#f5f1eb}
 html[data-theme="light"] .item img,html[data-theme="light"] .ph{background:#f3ede6}
 html[data-theme="light"] .theme-switch{background:#e9bd70;border-color:#d6a95c}
+
+/* Dashboard title and date/export controls */
+.dashboard-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.dashboard-header h2{margin:0}
+.dashboard-actions{display:flex;align-items:center;gap:.6rem}
+.dashboard-actions input[type=date]{width:auto;min-width:175px}
+.dashboard-actions .btn{white-space:nowrap}
+@media(max-width:640px){
+  .dashboard-header{align-items:stretch;flex-direction:column}
+  .dashboard-actions{display:grid;grid-template-columns:1fr}
+  .dashboard-actions input[type=date],.dashboard-actions .btn{width:100%}
+}
 /* Keep the selected admin tab readable in the light theme */
 html[data-theme="light"] .tabs .btn.on{background:var(--green);border-color:var(--green);color:#fff}
 /* Place the dashboard accent on the KPI cards instead of across the whole row */
