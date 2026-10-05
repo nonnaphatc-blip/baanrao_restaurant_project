@@ -7,7 +7,7 @@ import secrets
 import time
 from datetime import datetime, timedelta
 
-from auth import PHONE_RE, ROLES, USERNAME_RE, check_password_policy, find_user, hash_password
+from auth import ROLES, USERNAME_RE, check_password_policy, find_user, hash_password
 from storage import FMT, AppError, next_id, now_str, today_str
 
 SPICE = ("ไม่เผ็ด", "เผ็ดน้อย", "เผ็ดกลาง", "เผ็ดมาก")
@@ -91,12 +91,10 @@ SCHEMAS = {
                     "min_stock": F(float, "สต็อกขั้นต่ำ", min=0, max=10000000, default=0.0)},
     "users": {"username": F(str, "ชื่อผู้ใช้", req=True, pattern=USERNAME_RE),
               "name": F(str, "ชื่อ", req=True, max=50),
-              "phone": F(str, "เบอร์โทร", pattern=PHONE_RE, default=""),
               "role": F(str, "บทบาท", req=True, choices=ROLES),
               "active": F(bool, "เปิดใช้งาน", default=True),
               "points": F(int, "แต้มสะสม", min=0, max=10000000, default=0)},
     "reservations": {"name": F(str, "ชื่อผู้จอง", req=True, max=50),
-                     "phone": F(str, "เบอร์โทร", req=True, pattern=PHONE_RE),
                      "date": F(str, "วันที่", req=True, pattern=r"\d{4}-\d{2}-\d{2}"),
                      "time": F(str, "เวลา", req=True, pattern=r"\d{2}:\d{2}"),
                      "party": F(int, "จำนวนคน", req=True, min=1, max=50),
@@ -105,7 +103,6 @@ SCHEMAS = {
                      "status": F(str, "สถานะ", choices=("pending", "confirmed", "seated", "cancelled"),
                                  default="pending")},
     "queue": {"name": F(str, "ชื่อ", req=True, max=50),
-              "phone": F(str, "เบอร์โทร", req=True, pattern=PHONE_RE),
               "party": F(int, "จำนวนคน", req=True, min=1, max=50),
               "status": F(str, "สถานะ", choices=("waiting", "called", "seated", "cancelled"),
                           default="waiting")},
@@ -121,9 +118,9 @@ ENTITIES = {  # search fields, allowed filters, roles allowed to read/write
     "menu": {"search": ("name", "description"), "filters": ("category_id", "available"), "roles": ("admin",)},
     "tables": {"search": ("name",), "filters": ("status",), "roles": ("admin",)},
     "ingredients": {"search": ("name",), "filters": (), "roles": ("admin",)},
-    "users": {"search": ("username", "name", "phone"), "filters": ("role", "active"), "roles": ("admin",)},
-    "reservations": {"search": ("name", "phone", "date"), "filters": ("status", "date"), "roles": ("admin", "cashier")},
-    "queue": {"search": ("name", "phone"), "filters": ("status",), "roles": ("admin", "cashier")},
+    "users": {"search": ("username", "name"), "filters": ("role", "active"), "roles": ("admin",)},
+    "reservations": {"search": ("name", "date"), "filters": ("status", "date"), "roles": ("admin", "cashier")},
+    "queue": {"search": ("name",), "filters": ("status",), "roles": ("admin", "cashier")},
 }
 UNIQUE = {"categories": "name", "menu": "name", "tables": "name", "ingredients": "name", "users": "username"}
 EXTRA_FIELDS = {"menu": {"recipe"}, "users": {"password"}}
@@ -226,8 +223,11 @@ def query(rows, params, search=(), filters=(), default_sort="id", default_order=
 
 
 def public_row(entity, row):
-    return {k: v for k, v in row.items() if k not in ("password_hash", "session_version")} if entity == "users" else row
-
+    if entity == "users":
+        return {k: v for k, v in row.items() if k not in ("password_hash", "session_version", "phone")}
+    if entity in ("reservations", "queue"):
+        return {k: v for k, v in row.items() if k != "phone"}
+    return row
 
 def new_table_access(db):
     codes = {str(t.get("access_code", "")) for t in db["tables"]}
@@ -343,28 +343,12 @@ def _prepare(db, entity, row, data, old):
                     raise AppError(f"{SCHEMAS[entity][key]['label']} ไม่ถูกต้อง") from None
         if row.get("table_id"):
             need(db, "tables", row["table_id"], "ไม่พบโต๊ะ")
-        reservation_phone = re.sub(r"\D", "", str(row.get("phone", old.get("phone", "") if old else "")))
-        if reservation_phone:
-            customer = next((user for user in db["users"]
-                             if user.get("role") == "customer" and user.get("active", True)
-                             and re.sub(r"\D", "", str(user.get("phone") or "")) == reservation_phone), None)
-            if customer:
-                row["customer_id"] = customer["id"]
     if entity == "reservations":
         table_id = row.get("table_id", old.get("table_id") if old else None)
         date = row.get("date", old.get("date") if old else None)
         time = row.get("time", old.get("time") if old else None)
         party = row.get("party", old.get("party", 0) if old else 0)
         status = row.get("status", old.get("status", "pending") if old else "pending")
-        if old is None and status != "cancelled":
-            phone = re.sub(r"\D", "", str(row.get("phone", "")))
-            duplicate = next((reservation for reservation in db["reservations"]
-                              if reservation.get("status") in ("pending", "confirmed")
-                              and reservation.get("date") == date
-                              and reservation.get("time") == time
-                              and re.sub(r"\D", "", str(reservation.get("phone", ""))) == phone), None)
-            if duplicate:
-                raise AppError("มีคำขอจองจากเบอร์นี้ในวันและเวลานี้แล้ว")
         if table_id:
             table = need(db, "tables", table_id)
             if party > table["seats"]:
@@ -885,33 +869,34 @@ def public_reservation(db, data, customer=None):
         wait = max(0, math.ceil((account or {}).get("reservation_cooldown_until", 0) - time.time()))
         if wait:
             raise AppError(f"ยกเลิกการจองแล้ว กรุณารออีก {wait} วินาทีก่อนจองใหม่")
-    fields = {k: data.get(k) for k in ("name", "phone", "date", "time", "party", "note")}
+    fields = {k: data.get(k) for k in ("name", "date", "time", "party", "note")}
     fields["status"] = "pending"
     if valid_date(fields["date"]) is None or fields["date"] < today_str():
         raise AppError("กรุณาเลือกวันที่ตั้งแต่วันนี้เป็นต้นไป")
-    phone = re.sub(r"\D", "", str(fields.get("phone") or ""))
-    duplicate = next((reservation for reservation in db["reservations"]
-                      if reservation.get("status") in ("pending", "confirmed")
-                      and reservation.get("date") == fields["date"]
-                      and reservation.get("time") == fields["time"]
-                      and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone), None)
-    if duplicate:
-        raise AppError("คุณทำการจองช่วงเวลานี้ไปแล้ว หากต้องการเปลี่ยนแปลง กรุณายกเลิกการจองเดิมก่อน")
+    customer_id = customer["id"] if customer and customer.get("role") == "customer" else None
+    if customer_id:
+        duplicate = next((reservation for reservation in db["reservations"]
+                          if reservation.get("status") in ("pending", "confirmed")
+                          and reservation.get("date") == fields["date"]
+                          and reservation.get("time") == fields["time"]
+                          and reservation.get("customer_id") == customer_id
+                          and reservation.get("customer_account_owned") is True), None)
+        if duplicate:
+            raise AppError("คุณทำการจองช่วงเวลานี้ไปแล้ว หากต้องการเปลี่ยนแปลง กรุณายกเลิกการจองเดิมก่อน")
     row, _ = create_entity(db, "reservations", fields)
     reservation = next(r for r in db["reservations"] if r["id"] == row["id"])
     reservation["status_notifications"] = []
-    if customer and customer.get("role") == "customer":
-        reservation["customer_id"] = customer["id"]
+    if customer_id is not None:
+        reservation["customer_id"] = customer_id
+        reservation["customer_account_owned"] = True
     add_event(db, "staff", f"จองโต๊ะใหม่: {row['name']} {row['party']} คน {row['date']} {row['time']}")
     return row
 
-
 def customer_reservation_notifications(db, user):
-    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
     rows = []
     for reservation in db["reservations"]:
-        if reservation.get("customer_id") != user["id"] and (
-                not phone or re.sub(r"\D", "", str(reservation.get("phone") or "")) != phone):
+        if (reservation.get("customer_id") != user["id"] or
+                reservation.get("customer_account_owned") is not True):
             continue
         notices = reservation.get("status_notifications", [])
         if not notices:
@@ -933,23 +918,19 @@ def customer_reservation_notifications(db, user):
                          "text": notice["text"], "at": notice["at"]})
     return sorted(rows, key=lambda item: item["at"], reverse=True)
 
-
 def customer_has_active_reservation(db, user):
-    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
     return any(
-        reservation.get("status", "pending") in ("pending", "confirmed") and
-        (reservation.get("customer_id") == user["id"] or
-         (phone and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone))
+        reservation.get("customer_id") == user["id"] and
+        reservation.get("customer_account_owned") is True and
+        reservation.get("status", "pending") in ("pending", "confirmed")
         for reservation in db["reservations"]
     )
 
-
 def customer_reservation_panel(db, user):
-    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
     reservations = [reservation for reservation in db["reservations"]
                     if reservation.get("status", "pending") in ("pending", "confirmed")
-                    and (reservation.get("customer_id") == user["id"] or
-                         (phone and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone))]
+                    and reservation.get("customer_id") == user["id"]
+                    and reservation.get("customer_account_owned") is True]
     reservations.sort(key=lambda reservation: (reservation.get("date", ""), reservation.get("time", "")))
     account = next((row for row in db["users"] if row["id"] == user["id"]), {})
     cooldown = max(0, math.ceil(account.get("reservation_cooldown_until", 0) - time.time()))
@@ -958,12 +939,10 @@ def customer_reservation_panel(db, user):
                                "name": row.get("name")} for row in reservations],
             "cooldown_seconds": cooldown}
 
-
 def cancel_customer_reservation(db, user, reservation_id):
-    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
     reservation = next((row for row in db["reservations"] if row["id"] == to_int(reservation_id, -1)), None)
-    if reservation is None or (reservation.get("customer_id") != user["id"] and
-                               (not phone or re.sub(r"\D", "", str(reservation.get("phone") or "")) != phone)):
+    if (reservation is None or reservation.get("customer_id") != user["id"] or
+            reservation.get("customer_account_owned") is not True):
         raise AppError("ไม่พบรายการจองของคุณ", 404)
     if reservation.get("status", "pending") not in ("pending", "confirmed"):
         raise AppError("รายการจองนี้ยกเลิกไปแล้วหรือไม่สามารถยกเลิกได้", 409)
@@ -979,7 +958,6 @@ def cancel_customer_reservation(db, user, reservation_id):
         account["reservation_cooldown_until"] = time.time() + 60
     add_event(db, "staff", f"ลูกค้ายกเลิกการจอง: {reservation['name']} {reservation['party']} คน {reservation['date']} {reservation['time']}")
     return {"cooldown_seconds": 60}
-
 
 def prune_cancelled_reservations(db):
     now = datetime.strptime(now_str(), FMT)
@@ -1001,7 +979,7 @@ def prune_cancelled_reservations(db):
 
 
 def public_queue(db, data):
-    fields = {k: data.get(k) for k in ("name", "phone", "party")}
+    fields = {k: data.get(k) for k in ("name", "party")}
     row, _ = create_entity(db, "queue", fields)
     ahead = sum(1 for q in db["queue"] if q["date"] == row["date"] and q["status"] == "waiting" and q["number"] < row["number"])
     add_event(db, "staff", f"คิวใหม่ #{row['number']}: {row['name']} {row['party']} คน")
@@ -1016,7 +994,7 @@ def seed(db):
             raise RuntimeError("Set ADMIN_PASSWORD before initializing an empty database")
         check_password_policy(password)
         db["users"].append({"id": next_id(db, "users"), "username": "admin", "name": "ผู้ดูแลระบบ",
-                            "phone": "", "role": "admin", "active": True, "points": 0,
+                            "role": "admin", "active": True, "points": 0,
                             "session_version": 0,
                             "password_hash": hash_password(password)})
     ensure_table_access(db)

@@ -18,7 +18,6 @@ ROLES = ("admin", "cashier", "kitchen", "customer")
 STAFF = ("admin", "cashier", "kitchen")
 HOME = {"admin": "/admin", "cashier": "/pos", "kitchen": "/kitchen", "customer": "/"}
 USERNAME_RE = r"[A-Za-z0-9_]{3,20}"
-PHONE_RE = r"\+?[0-9\-]{8,15}"
 AUTH_SESSION_MAX_AGE = 8 * 3600
 
 bp = Blueprint("auth", __name__)
@@ -180,14 +179,11 @@ def register():
     try:
         username = str(form.get("username", "")).strip()
         name = str(form.get("name", "")).strip()
-        phone = str(form.get("phone", "")).strip()
         password = str(form.get("password", ""))
         if not re.fullmatch(USERNAME_RE, username):
             raise AppError("ชื่อผู้ใช้ต้องเป็น a-z, 0-9, _ ยาว 3-20 ตัว")
         if not 1 <= len(name) <= 50:
             raise AppError("กรุณากรอกชื่อ (ไม่เกิน 50 ตัวอักษร)")
-        if phone and not re.fullmatch(PHONE_RE, phone):
-            raise AppError("เบอร์โทรไม่ถูกต้อง")
         check_password_policy(password)
         if password != form.get("confirm", ""):
             raise AppError("รหัสผ่านยืนยันไม่ตรงกัน")
@@ -196,7 +192,7 @@ def register():
             if find_user(db, username):
                 raise AppError("ชื่อผู้ใช้นี้ถูกใช้แล้ว")
             user = {"id": storage.next_id(db, "users"), "username": username, "name": name,
-                    "phone": phone, "role": "customer", "active": True, "points": 0,
+                    "role": "customer", "active": True, "points": 0,
                     "session_version": 0,
                     "password_hash": hash_password(password)}
             db["users"].append(user)

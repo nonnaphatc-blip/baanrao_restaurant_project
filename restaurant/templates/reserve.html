@@ -9,7 +9,6 @@
     <form class="card stack" data-api="/api/public/reservations">
       <h2>จองโต๊ะล่วงหน้า</h2>
       <label>ชื่อ<input name="name" required maxlength="50"></label>
-      <label>เบอร์โทร<input name="phone" required inputmode="tel" pattern="\+?[0-9\-]{8,15}" title="ตัวเลข 8-15 หลัก"></label>
       <div class="row"><label class="grow">วันที่<input type="date" name="date" required min="{{ today }}"></label>
       <label class="grow">เวลา<input type="time" name="time" required></label></div>
       <label>จำนวนคน<input type="number" name="party" min="1" max="50" value="2" required></label>
@@ -27,7 +26,6 @@
       <h2>รับคิวหน้าร้าน</h2>
       <p class="muted">รับคิวออนไลน์ แล้วมาตามเวลาที่ร้านเรียก</p>
       <label>ชื่อ<input name="name" required maxlength="50"></label>
-      <label>เบอร์โทร<input name="phone" required inputmode="tel" pattern="\+?[0-9\-]{8,15}" title="ตัวเลข 8-15 หลัก"></label>
       <label>จำนวนคน<input type="number" name="party" min="1" max="50" value="2" required></label>
       <button class="btn primary">รับคิว</button>
     </form>
