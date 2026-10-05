@@ -124,14 +124,22 @@ ENTITIES = {  # search fields, allowed filters, roles allowed to read/write
     "reservations": {"search": ("name", "phone", "date"), "filters": ("status", "date"), "roles": ("admin", "cashier")},
     "queue": {"search": ("name", "phone"), "filters": ("status",), "roles": ("admin", "cashier")},
 }
-UNIQUE = {"categories": "name", "tables": "name", "ingredients": "name", "users": "username"}
+UNIQUE = {"categories": "name", "menu": "name", "tables": "name", "ingredients": "name", "users": "username"}
+EXTRA_FIELDS = {"menu": {"recipe"}, "users": {"password"}}
 
 
 def _convert(value, rule):
     kind, label = rule["type"], rule["label"]
     try:
         if kind is bool:
-            return value if isinstance(value, bool) else str(value).strip().lower() in ("1", "true", "on", "yes")
+            if isinstance(value, bool):
+                return value
+            normalized = str(value).strip().lower()
+            if normalized in ("1", "true", "on", "yes"):
+                return True
+            if normalized in ("0", "false", "off", "no"):
+                return False
+            raise ValueError
         if kind is str:
             value = str(value).strip()
             if len(value) > rule.get("max", 200):
@@ -153,10 +161,13 @@ def _convert(value, rule):
     return value
 
 
-def clean(data, schema, partial=False):
-    """Validate + convert user input against a schema. Unknown keys are dropped."""
+def clean(data, schema, partial=False, extra_fields=()):
+    """Validate + convert user input against a schema; reject misspelled fields."""
     if not isinstance(data, dict):
         raise AppError("รูปแบบข้อมูลไม่ถูกต้อง")
+    unknown = set(data) - set(schema) - set(extra_fields)
+    if unknown:
+        raise AppError("พบชื่อช่องข้อมูลที่ไม่รองรับ: " + ", ".join(sorted(map(str, unknown))))
     out = {}
     for key, rule in schema.items():
         present = key in data
@@ -180,17 +191,31 @@ def _sort_key(value):
     return (1, 0, str(value).lower())
 
 
-def query(rows, params, search=(), filters=(), default_sort="id", default_order="asc"):
+def query(rows, params, search=(), filters=(), default_sort="id", default_order="asc", sort_fields=()):
     text = str(params.get("q", "")).strip().lower()
     if text:
         rows = [r for r in rows if any(text in str(r.get(f, "")).lower() for f in search)]
     field, _, value = str(params.get("filter", "")).partition(":")
+    raw_filter = str(params.get("filter", ""))
+    if raw_filter and (":" not in raw_filter or field not in filters or not value):
+        raise AppError("ตัวกรองข้อมูลไม่ถูกต้อง")
     if field in filters:
         rows = [r for r in rows if str(r.get(field)).lower() == value.lower()]
     sort = str(params.get("sort") or default_sort)
-    descending = (params.get("order") or default_order) == "desc"
+    allowed_sorts = set(sort_fields) or {key for row in rows for key in row}
+    if sort not in allowed_sorts:
+        raise AppError("ช่องที่ใช้เรียงข้อมูลไม่ถูกต้อง")
+    order = str(params.get("order") or default_order).lower()
+    if order not in ("asc", "desc"):
+        raise AppError("ทิศทางการเรียงข้อมูลไม่ถูกต้อง")
+    descending = order == "desc"
     rows = sorted(rows, key=lambda r: _sort_key(r.get(sort)), reverse=descending)
-    per = min(max(to_int(params.get("per"), 10), 1), 200)
+    raw_per, raw_page = params.get("per"), params.get("page")
+    if raw_per not in (None, "") and to_int(raw_per, 0) <= 0:
+        raise AppError("จำนวนรายการต่อหน้าไม่ถูกต้อง")
+    if raw_page not in (None, "") and to_int(raw_page, 0) <= 0:
+        raise AppError("เลขหน้าไม่ถูกต้อง")
+    per = min(to_int(raw_per, 10), 200)
     total = len(rows)
     pages = max(1, -(-total // per))
     page = min(max(to_int(params.get("page"), 1), 1), pages)
@@ -221,7 +246,8 @@ def list_entity(db, entity, params):
     cfg = ENTITIES[entity]
     rows = [public_row(entity, r) for r in db[entity]]
     default_sort = "sort" if entity == "categories" else "id"
-    return query(rows, params, cfg["search"], cfg["filters"], default_sort)
+    sort_fields = (*SCHEMAS[entity].keys(), "id")
+    return query(rows, params, cfg["search"], cfg["filters"], default_sort, sort_fields=sort_fields)
 
 
 # ---------- generic CRUD ----------
@@ -285,6 +311,26 @@ def _prepare(db, entity, row, data, old):
                     raise AppError(f"{SCHEMAS[entity][key]['label']} ไม่ถูกต้อง") from None
         if row.get("table_id"):
             need(db, "tables", row["table_id"], "ไม่พบโต๊ะ")
+    if entity == "reservations":
+        table_id = row.get("table_id", old.get("table_id") if old else None)
+        date = row.get("date", old.get("date") if old else None)
+        time = row.get("time", old.get("time") if old else None)
+        party = row.get("party", old.get("party", 0) if old else 0)
+        status = row.get("status", old.get("status", "pending") if old else "pending")
+        if table_id:
+            table = need(db, "tables", table_id)
+            if party > table["seats"]:
+                raise AppError("จำนวนผู้จองเกินจำนวนที่นั่งของโต๊ะ")
+            if status != "cancelled":
+                for reservation in db["reservations"]:
+                    if old and reservation["id"] == old["id"]:
+                        continue
+                    if (reservation.get("table_id") == table_id and
+                            reservation.get("date") == date and reservation.get("time") == time and
+                            reservation.get("status") != "cancelled"):
+                        raise AppError("โต๊ะนี้มีรายการจองในวันและเวลาดังกล่าวแล้ว")
+        if date and date < today_str() and status not in ("seated", "cancelled"):
+            raise AppError("ไม่สามารถบันทึกรายการจองที่เป็นวันผ่านมาแล้วได้")
     if old is None and entity in ("reservations", "queue"):
         row["created_at"] = now_str()
     if old is None and entity == "queue":
@@ -293,7 +339,7 @@ def _prepare(db, entity, row, data, old):
 
 
 def create_entity(db, entity, data):
-    row = clean(data, SCHEMAS[entity])
+    row = clean(data, SCHEMAS[entity], extra_fields=EXTRA_FIELDS.get(entity, ()))
     _prepare(db, entity, row, data, None)
     row["id"] = next_id(db, entity)
     db[entity].append(row)
@@ -302,7 +348,7 @@ def create_entity(db, entity, data):
 
 def update_entity(db, entity, id_, data):
     old = need(db, entity, id_)
-    row = clean(data, SCHEMAS[entity], partial=True)
+    row = clean(data, SCHEMAS[entity], partial=True, extra_fields=EXTRA_FIELDS.get(entity, ()))
     _prepare(db, entity, row, data, old)
     changes = [f"{k}: {old.get(k)} → {v}" for k, v in row.items()
                if old.get(k) != v and k not in ("password_hash", "recipe")]

@@ -452,7 +452,8 @@ def api_dashboard_export():
 @role_required("admin")
 def api_logs():
     return ok(**services.query(logger.read_logs(), request.args, ("user", "action", "entity", "detail"),
-                               ("action", "entity", "user"), "id", "desc"))
+                               ("action", "entity", "user"), "id", "desc",
+                               sort_fields=("id", "ts", "user", "action", "entity", "ref", "detail")))
 
 
 @app.route("/api/admin/settings", methods=("GET", "PUT"))
