@@ -152,6 +152,8 @@ def home():
 @app.get("/reserve")
 @role_required(*auth.ROLES)
 def reserve():
+    if g.user["role"] == "customer" and services.customer_has_active_reservation(storage.load(), g.user):
+        return redirect("/customer-notifications")
     return render_template("reserve.html", today=storage.today_str())
 
 

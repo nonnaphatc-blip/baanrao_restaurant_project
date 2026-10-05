@@ -264,6 +264,10 @@ def release_table(db, table):
 def list_entity(db, entity, params):
     cfg = ENTITIES[entity]
     rows = [public_row(entity, r) for r in db[entity]]
+    if entity == "reservations":
+        for row in rows:
+            if row.get("status") not in ("pending", "confirmed", "seated", "cancelled"):
+                row["status"] = "pending"
     default_sort = "sort" if entity == "categories" else "id"
     sort_fields = (*SCHEMAS[entity].keys(), "id")
     return query(rows, params, cfg["search"], cfg["filters"], default_sort, sort_fields=sort_fields)
@@ -383,7 +387,9 @@ def update_entity(db, entity, id_, data):
     if "recipe" in row and old.get("recipe") != row["recipe"]:
         changes.append("แก้สูตรอาหาร")
     if entity == "reservations":
-        prior_status = old.get("status", "pending")
+        prior_status = old.get("status") or "pending"
+        if prior_status not in ("pending", "confirmed", "seated", "cancelled"):
+            prior_status = "pending"
         next_status = row.get("status", prior_status)
         if prior_status == "pending" and next_status in ("confirmed", "cancelled"):
             old.setdefault("status_notifications", []).append({
@@ -851,12 +857,26 @@ def customer_reservation_notifications(db, user):
         if reservation.get("customer_id") != user["id"] and (
                 not phone or re.sub(r"\D", "", str(reservation.get("phone") or "")) != phone):
             continue
-        for notice in reservation.get("status_notifications", []):
+        notices = reservation.get("status_notifications", [])
+        if not notices and reservation.get("status", "pending") == "pending":
+            notices = [{"status": "pending", "at": reservation.get("created_at", ""),
+                        "text": "ได้รับคำขอจองโต๊ะแล้ว กำลังรอร้านยืนยัน"}]
+        for notice in notices:
             rows.append({"id": f"{reservation['id']}-{notice['at']}",
                          "reservation_id": reservation["id"], "date": reservation.get("date"),
                          "time": reservation.get("time"), "party": reservation.get("party"),
                          "text": notice["text"], "at": notice["at"]})
     return sorted(rows, key=lambda item: item["at"], reverse=True)
+
+
+def customer_has_active_reservation(db, user):
+    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
+    return any(
+        reservation.get("status", "pending") in ("pending", "confirmed") and
+        (reservation.get("customer_id") == user["id"] or
+         (phone and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone))
+        for reservation in db["reservations"]
+    )
 
 
 def public_queue(db, data):
