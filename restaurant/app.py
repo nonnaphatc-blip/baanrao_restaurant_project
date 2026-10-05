@@ -59,7 +59,7 @@ if is_production and not storage.USE_REMOTE_DB:
     raise RuntimeError("Set DATABASE_URL or MONGODB_URI to persistent storage before starting in production")
 app.config.update(SECRET_KEY=load_secret(), SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",
                   SESSION_COOKIE_SECURE=env_flag("COOKIE_SECURE", is_production), MAX_CONTENT_LENGTH=2 * 1024 * 1024,
-                  PERMANENT_SESSION_LIFETIME=8 * 3600)
+                  PERMANENT_SESSION_LIFETIME=auth.AUTH_SESSION_MAX_AGE)
 app.json.ensure_ascii = False
 app.register_blueprint(auth.bp)
 

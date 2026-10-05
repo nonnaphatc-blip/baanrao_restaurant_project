@@ -1,6 +1,7 @@
 """Register / Login module (separate from the main app). Role based access."""
 import hashlib
 import hmac
+import math
 import os
 import re
 import secrets
@@ -18,6 +19,7 @@ STAFF = ("admin", "cashier", "kitchen")
 HOME = {"admin": "/admin", "cashier": "/pos", "kitchen": "/kitchen", "customer": "/"}
 USERNAME_RE = r"[A-Za-z0-9_]{3,20}"
 PHONE_RE = r"\+?[0-9\-]{8,15}"
+AUTH_SESSION_MAX_AGE = 8 * 3600
 
 bp = Blueprint("auth", __name__)
 
@@ -76,6 +78,17 @@ def load_user():
         return
     uid = session.get("uid")
     if uid:
+        # Flask's permanent cookie expiry is refreshed as the browser uses it.
+        # Keep a separate authentication timestamp so an active/replayed cookie
+        # cannot extend an authenticated session forever.
+        authenticated_at = session.get("authenticated_at")
+        now = time.time()
+        if (type(authenticated_at) not in (int, float) or
+                authenticated_at > now or
+                not math.isfinite(authenticated_at) or
+                now - authenticated_at >= AUTH_SESSION_MAX_AGE):
+            session.clear()
+            return
         db = storage.load()
         user = next((u for u in db["users"] if u["id"] == uid), None)
         session_version = session.get("session_version", 0)
@@ -129,6 +142,7 @@ def start_session(user):
     session.clear()
     session["uid"] = user["id"]
     session["session_version"] = user.get("session_version", 0)
+    session["authenticated_at"] = time.time()
     session["csrf"] = secrets.token_hex(16)
     session["notification_session"] = _new_notification_session(user)
     session.permanent = True
