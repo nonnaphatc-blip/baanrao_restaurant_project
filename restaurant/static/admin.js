@@ -53,8 +53,12 @@ const TABS = role === 'admin'
   : [['tables', 'โต๊ะ'], ['reservations', 'จองโต๊ะ'], ['queue', 'คิว']];
 let S = {};
 let tableStatusTimer = null;
+let viewGeneration = 0;
+let listRequestId = 0;
+let dashboardRequestId = 0;
+let lookupsPromise = null;
 
-async function cashierTablesView() {
+async function cashierTablesView(generation) {
   $('#view').innerHTML = `<div class="row toolbar"><input type="search" id="tableAccessSearch" class="grow" placeholder="ค้นหาโต๊ะ..."></div>
     <div id="tableAccessList"></div>`;
   const draw = (tables, query) => {
@@ -68,7 +72,7 @@ async function cashierTablesView() {
   };
   const refresh = async () => {
     const tables = (await api('/api/tables')).tables;
-    if (S.ent !== 'tables') return;
+    if (generation !== viewGeneration || S.ent !== 'tables') return;
     if (tables.some(t => !t.qr_token || !t.access_code)) {
       throw new Error('ข้อมูล QR และรหัสโต๊ะยังโหลดไม่ครบ กรุณารีสตาร์ทเซิร์ฟเวอร์แล้วลองใหม่');
     }
@@ -77,8 +81,9 @@ async function cashierTablesView() {
   };
   $('#tableAccessSearch').oninput = e => draw(S.rows, e.target.value);
   await refresh();
+  if (generation !== viewGeneration) return;
   tableStatusTimer = setInterval(() => {
-    if (!document.hidden && S.ent === 'tables' && !$('dialog[open]')) refresh().catch(() => {});
+    if (!document.hidden && generation === viewGeneration && S.ent === 'tables' && !$('dialog[open]')) refresh().catch(() => {});
   }, 2500);
 }
 
@@ -88,9 +93,21 @@ async function loadLookups() {
   if (role === 'admin') L.ingredients = (await api('/api/admin/ingredients?per=200')).items;
 }
 
+function ensureLookups() {
+  if (!lookupsPromise) lookupsPromise = loadLookups().catch(error => { lookupsPromise = null; throw error; });
+  return lookupsPromise;
+}
+
+function refreshLookups() {
+  lookupsPromise = null;
+  return ensureLookups();
+}
+
 // ---------- dashboard ----------
-async function dash(date) {
+async function dash(date, generation = viewGeneration) {
+  const requestId = ++dashboardRequestId;
   const d = (await api('/api/admin/dashboard?date=' + date)).dashboard;
+  if (generation !== viewGeneration || requestId !== dashboardRequestId) return;
   const max = Math.max(1, ...d.week.map(w => w.sales));
   const methods = {cash: 'เงินสด', card: 'บัตร', qr: 'QR'};
   $('#view').innerHTML = `<div class="dashboard-header"><h2>สรุปยอดขายรายวัน</h2><div class="dashboard-actions"><input type="date" id="dd" value="${d.date}" class="auto"><a class="btn primary" href="/api/admin/dashboard/export?date=${d.date}">ดาวน์โหลด CSV 30 วัน</a></div></div>
@@ -107,12 +124,13 @@ async function dash(date) {
       <div class="card stack"><h3>วัตถุดิบใกล้หมด</h3>${d.low_stock.map(i => `<div class="row between"><span>${esc(i.name)}</span><b class="err">${i.stock} ${esc(i.unit)}</b></div>`).join('') || '<p class="muted">สต็อกปกติ</p>'}
         <h3>วันนี้</h3><div class="row between"><span>จองโต๊ะรอดำเนินการ</span><b>${d.reservations}</b></div><div class="row between"><span>คิวที่รออยู่</span><b>${d.queue}</b></div></div></div>`;
   $$('.bar i').forEach(i => { i.style.width = i.dataset.w + '%'; });
-  $('#dd').onchange = e => { if (e.target.value) run(() => dash(e.target.value)); };
+  $('#dd').onchange = e => { if (e.target.value && generation === viewGeneration) run(() => dash(e.target.value, generation)); };
 }
 
 // ---------- settings ----------
-async function settingsView() {
+async function settingsView(generation = viewGeneration) {
   const s = (await api('/api/admin/settings')).settings;
+  if (generation !== viewGeneration) return;
   const fields = [['vat', 'VAT (%)'], ['service', 'ค่าบริการ (%)'], ['point_per_baht', 'ซื้อกี่บาทได้ 1 แต้ม (ใช้แลกส่วนลด 1 แต้ม = 1 บาท)'], ['egg_price', 'ราคาไข่เพิ่ม'], ['size_price', 'ราคาขนาดพิเศษเพิ่ม']];
   $('#view').innerHTML = `<form id="setForm" class="card stack narrow"><h2>ตั้งค่าร้าน</h2>
     ${fields.map(([k, l]) => `<label>${esc(l)}<input name="${k}" type="number" step="any" min="0" value="${s[k]}"></label>`).join('')}
@@ -125,34 +143,42 @@ async function settingsView() {
 
 // ---------- generic list ----------
 async function openTab(t) {
+  const generation = ++viewGeneration;
+  ++listRequestId;
   if (tableStatusTimer !== null) clearInterval(tableStatusTimer);
   tableStatusTimer = null;
   S = {ent: t, q: '', filter: '', sort: '', order: 'asc', page: 1, rows: []};
   $$('#tabs .btn').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  if (t === 'dashboard') return dash(new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Bangkok'}));
-  if (t === 'settings') return settingsView();
-  if (t === 'tables' && role === 'cashier') return cashierTablesView();
+  $('#view').innerHTML = '<p class="muted">กำลังโหลด...</p>';
+  if (t === 'dashboard') return dash(new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Bangkok'}), generation);
+  if (t === 'settings') return settingsView(generation);
+  if (t === 'tables' && role === 'cashier') return cashierTablesView(generation);
   const cfg = ENT[t];
   $('#view').innerHTML = `<div class="row toolbar"><input type="search" id="q" class="grow" placeholder="ค้นหา${esc(cfg.title)}...">
     ${cfg.filter ? `<select id="f"><option value="">ทุกสถานะ</option>${cfg.filter[1].map(([v, l]) => `<option value="${cfg.filter[0]}:${esc(v)}">${esc(l)}</option>`).join('')}</select>` : ''}
-    ${cfg.ro ? '' : '<button class="btn primary" data-act="add">+ เพิ่ม</button>'}</div><div id="list"></div>`;
+    ${cfg.ro ? '' : '<button class="btn primary" data-act="add">+ เพิ่ม</button>'}</div><div id="list"><p class="muted">กำลังโหลด...</p></div>`;
+  const state = S;
   let timer;
-  $('#q').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { S.q = e.target.value; S.page = 1; run(list); }, 300); };
-  if ($('#f')) $('#f').onchange = e => { S.filter = e.target.value; S.page = 1; run(list); };
-  await list();
-  if (t === 'tables' && role === 'admin') {
+  $('#q').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { if (generation !== viewGeneration || S !== state) return; state.q = e.target.value; state.page = 1; run(() => list(generation)); }, 300); };
+  if ($('#f')) $('#f').onchange = e => { if (generation !== viewGeneration || S !== state) return; state.filter = e.target.value; state.page = 1; run(() => list(generation)); };
+  await list(generation);
+  if (generation === viewGeneration && S === state && t === 'tables' && role === 'admin') {
     tableStatusTimer = setInterval(() => {
-      if (!document.hidden && S.ent === 'tables' && !$('dialog[open]')) run(list);
+      if (!document.hidden && generation === viewGeneration && S === state && !$('dialog[open]')) run(() => list(generation));
     }, 2500);
   }
 }
 
-async function list() {
-  const cfg = ENT[S.ent];
-  const p = new URLSearchParams({q: S.q, filter: S.filter, sort: S.sort, order: S.order, page: S.page, per: 10});
-  const d = await api(`/api/admin/${S.ent}?${p}`);
-  S.rows = d.items;
-  const head = cfg.cols.map(([k, l, , sortable]) => `<th ${sortable === 0 ? '' : `data-act="sort" data-k="${k}"`}>${esc(l)}${S.sort === k ? (S.order === 'asc' ? ' ▲' : ' ▼') : ''}</th>`).join('') + (cfg.ro ? '' : '<th></th>');
+async function list(generation = viewGeneration) {
+  if (generation !== viewGeneration) return;
+  const state = S;
+  const cfg = ENT[state.ent];
+  const requestId = ++listRequestId;
+  const p = new URLSearchParams({q: state.q, filter: state.filter, sort: state.sort, order: state.order, page: state.page, per: 10});
+  const d = await api(`/api/admin/${state.ent}?${p}`);
+  if (generation !== viewGeneration || S !== state || requestId !== listRequestId) return;
+  state.rows = d.items;
+  const head = cfg.cols.map(([k, l, , sortable]) => `<th ${sortable === 0 ? '' : `data-act="sort" data-k="${k}"`}>${esc(l)}${state.sort === k ? (state.order === 'asc' ? ' ▲' : ' ▼') : ''}</th>`).join('') + (cfg.ro ? '' : '<th></th>');
   const rows = d.items.map(r => `<tr>${cfg.cols.map(([k, , f]) => `<td>${(FMT[f] || esc)(r[k])}</td>`).join('')}${cfg.ro ? '' :
     `<td class="right nowrap">${cfg.qr ? `<button class="btn sm" data-act="qr" data-id="${r.id}">QR</button> ` : ''}<button class="btn sm" data-act="edit" data-id="${r.id}">แก้ไข</button> <button class="btn sm danger" data-act="del" data-id="${r.id}">ลบ</button></td>`}</tr>`).join('');
   $('#list').innerHTML = `<div class="tblwrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${rows || `<tr><td colspan="9" class="muted">ไม่พบข้อมูล</td></tr>`}</tbody></table></div>
@@ -204,7 +230,7 @@ function formDialog(ent, row) {
       saveButton.disabled = true;
       await api(`/api/admin/${ent}${row ? '/' + row.id : ''}`, row ? 'PUT' : 'POST', body);
       d.close(); toast('บันทึกแล้ว');
-      await loadLookups(); await list();
+      await refreshLookups(); await list();
     } catch (err) { $('#ferr', d).textContent = err.message; }
     finally {
       delete form.dataset.saving;
@@ -260,12 +286,20 @@ on({
   tab: d => openTab(d.t),
   sort: d => { S.order = S.sort === d.k && S.order === 'asc' ? 'desc' : 'asc'; S.sort = d.k; return list(); },
   page: d => { S.page = +d.p; return list(); },
-  add: () => formDialog(S.ent, null),
-  edit: d => formDialog(S.ent, S.rows.find(r => r.id === +d.id)),
+  add: async () => {
+    const generation = viewGeneration, entity = S.ent;
+    await ensureLookups();
+    if (generation === viewGeneration && entity === S.ent) formDialog(entity, null);
+  },
+  edit: async d => {
+    const generation = viewGeneration, entity = S.ent, row = S.rows.find(r => r.id === +d.id);
+    await ensureLookups();
+    if (generation === viewGeneration && entity === S.ent && row) formDialog(entity, row);
+  },
   del: async d => {
     if (!confirm('ยืนยันการลบ?')) return;
     await api(`/api/admin/${S.ent}/${d.id}`, 'DELETE'); toast('ลบแล้ว');
-    await loadLookups(); await list();
+    await refreshLookups(); await list();
   },
   qr: d => qrDialog(S.rows.find(r => r.id === +d.id)),
   'rec-add': () => $('#recipe').insertAdjacentHTML('beforeend', recRow()),
@@ -275,7 +309,7 @@ on({
 
 run(async () => {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<button class="btn sm" data-act="tab" data-t="${k}">${esc(l)}</button>`).join('');
-  await loadLookups();
   startEvents();
+  run(ensureLookups);
   await openTab(TABS[0][0]);
 });
