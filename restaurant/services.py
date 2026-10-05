@@ -354,6 +354,15 @@ def _prepare(db, entity, row, data, old):
         time = row.get("time", old.get("time") if old else None)
         party = row.get("party", old.get("party", 0) if old else 0)
         status = row.get("status", old.get("status", "pending") if old else "pending")
+        if old is None and status != "cancelled":
+            phone = re.sub(r"\D", "", str(row.get("phone", "")))
+            duplicate = next((reservation for reservation in db["reservations"]
+                              if reservation.get("status") in ("pending", "confirmed")
+                              and reservation.get("date") == date
+                              and reservation.get("time") == time
+                              and re.sub(r"\D", "", str(reservation.get("phone", ""))) == phone), None)
+            if duplicate:
+                raise AppError("มีคำขอจองจากเบอร์นี้ในวันและเวลานี้แล้ว")
         if table_id:
             table = need(db, "tables", table_id)
             if party > table["seats"]:
@@ -852,6 +861,14 @@ def public_reservation(db, data, customer=None):
     fields["status"] = "pending"
     if valid_date(fields["date"]) is None or fields["date"] < today_str():
         raise AppError("กรุณาเลือกวันที่ตั้งแต่วันนี้เป็นต้นไป")
+    phone = re.sub(r"\D", "", str(fields.get("phone") or ""))
+    duplicate = next((reservation for reservation in db["reservations"]
+                      if reservation.get("status") in ("pending", "confirmed")
+                      and reservation.get("date") == fields["date"]
+                      and reservation.get("time") == fields["time"]
+                      and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone), None)
+    if duplicate:
+        return duplicate
     row, _ = create_entity(db, "reservations", fields)
     reservation = next(r for r in db["reservations"] if r["id"] == row["id"])
     reservation["status_notifications"] = []

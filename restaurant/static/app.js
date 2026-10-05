@@ -81,11 +81,21 @@ document.addEventListener('submit', e => {
   const form = e.target.closest('form[data-api]');
   if (!form) return;
   e.preventDefault();
+  if (form.dataset.submitting === 'true') return;
+  const submit = $('button[type="submit"]', form) || $('button:not([type])', form);
+  const originalText = submit?.textContent;
+  form.dataset.submitting = 'true';
+  if (submit) { submit.disabled = true; submit.textContent = 'กำลังส่ง…'; }
   run(async () => {
-    const data = Object.fromEntries(new FormData(form));
-    const res = await api(form.dataset.api, 'POST', data);
-    toast(res.message || 'สำเร็จ');
-    form.reset();
+    try {
+      const data = Object.fromEntries(new FormData(form));
+      const res = await api(form.dataset.api, 'POST', data);
+      toast(res.message || 'สำเร็จ');
+      form.reset();
+    } finally {
+      delete form.dataset.submitting;
+      if (submit) { submit.disabled = false; submit.textContent = originalText; }
+    }
   });
 });
 
