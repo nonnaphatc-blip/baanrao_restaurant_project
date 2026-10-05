@@ -341,6 +341,13 @@ def _prepare(db, entity, row, data, old):
                     raise AppError(f"{SCHEMAS[entity][key]['label']} ไม่ถูกต้อง") from None
         if row.get("table_id"):
             need(db, "tables", row["table_id"], "ไม่พบโต๊ะ")
+        reservation_phone = re.sub(r"\D", "", str(row.get("phone", old.get("phone", "") if old else "")))
+        if reservation_phone:
+            customer = next((user for user in db["users"]
+                             if user.get("role") == "customer" and user.get("active", True)
+                             and re.sub(r"\D", "", str(user.get("phone") or "")) == reservation_phone), None)
+            if customer:
+                row["customer_id"] = customer["id"]
     if entity == "reservations":
         table_id = row.get("table_id", old.get("table_id") if old else None)
         date = row.get("date", old.get("date") if old else None)
@@ -372,6 +379,12 @@ def create_entity(db, entity, data):
     row = clean(data, SCHEMAS[entity], extra_fields=EXTRA_FIELDS.get(entity, ()))
     _prepare(db, entity, row, data, None)
     row["id"] = next_id(db, entity)
+    if entity == "reservations" and row.get("status") in ("confirmed", "cancelled"):
+        row["status_notifications"] = [{
+            "status": row["status"], "at": now_str(),
+            "text": "ร้านยืนยันการจองโต๊ะของคุณแล้ว" if row["status"] == "confirmed"
+                    else "ร้านปฏิเสธคำขอจองโต๊ะของคุณ",
+        }]
     db[entity].append(row)
     return public_row(entity, row), f"{row.get('name') or row.get('username') or row['id']}"
 
@@ -391,7 +404,7 @@ def update_entity(db, entity, id_, data):
         if prior_status not in ("pending", "confirmed", "seated", "cancelled"):
             prior_status = "pending"
         next_status = row.get("status", prior_status)
-        if prior_status == "pending" and next_status in ("confirmed", "cancelled"):
+        if prior_status != next_status and next_status in ("confirmed", "cancelled"):
             old.setdefault("status_notifications", []).append({
                 "status": next_status, "at": now_str(),
                 "text": "ร้านยืนยันการจองโต๊ะของคุณแล้ว" if next_status == "confirmed"
@@ -850,17 +863,24 @@ def public_reservation(db, data, customer=None):
 
 def customer_reservation_notifications(db, user):
     phone = re.sub(r"\D", "", str(user.get("phone") or ""))
-    if not phone:
-        return []
     rows = []
     for reservation in db["reservations"]:
         if reservation.get("customer_id") != user["id"] and (
                 not phone or re.sub(r"\D", "", str(reservation.get("phone") or "")) != phone):
             continue
         notices = reservation.get("status_notifications", [])
-        if not notices and reservation.get("status", "pending") == "pending":
-            notices = [{"status": "pending", "at": reservation.get("created_at", ""),
-                        "text": "ได้รับคำขอจองโต๊ะแล้ว กำลังรอร้านยืนยัน"}]
+        if not notices:
+            current_status = reservation.get("status", "pending")
+            if current_status == "pending":
+                text = "ได้รับคำขอจองโต๊ะแล้ว กำลังรอร้านยืนยัน"
+            elif current_status == "confirmed":
+                text = "ร้านยืนยันการจองโต๊ะของคุณแล้ว"
+            elif current_status == "cancelled":
+                text = "ร้านปฏิเสธคำขอจองโต๊ะของคุณ"
+            else:
+                text = ""
+            if text:
+                notices = [{"status": current_status, "at": reservation.get("created_at", ""), "text": text}]
         for notice in notices:
             rows.append({"id": f"{reservation['id']}-{notice['at']}",
                          "reservation_id": reservation["id"], "date": reservation.get("date"),
