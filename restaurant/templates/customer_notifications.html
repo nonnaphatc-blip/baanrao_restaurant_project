@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}แจ้งเตือนการจอง · {{ brand }}{% endblock %}
+{% block content %}
+<section class="wrap narrow">
+  <span class="tag">BAANRAO</span>
+  <h1>แจ้งเตือนการจองโต๊ะ</h1>
+  <p class="muted">ตรวจสอบผลการยืนยันหรือปฏิเสธคำขอจองของคุณ</p>
+  <div id="customerReservationNotifications" class="stack mt"><p class="muted">กำลังโหลด…</p></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='customer_notifications.js') }}"></script>{% endblock %}

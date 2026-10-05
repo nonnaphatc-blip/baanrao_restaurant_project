@@ -267,6 +267,12 @@ def notifications():
     return render_template("notifications.html")
 
 
+@app.get("/customer-notifications")
+@role_required("customer")
+def customer_notifications():
+    return render_template("customer_notifications.html")
+
+
 @app.get("/t/<int:table_id>")
 def customer_table(table_id):
     token = request.args.get("k", "")
@@ -446,6 +452,12 @@ def api_public_send(table_id):
     return ok()
 
 
+@app.get("/api/customer/reservation-notifications")
+@role_required("customer")
+def api_customer_reservation_notifications():
+    return ok(events=services.customer_reservation_notifications(storage.load(), g.user))
+
+
 @app.post("/api/public/order/<int:table_id>/bill")
 def api_public_bill(table_id):
     public_limit("bill")
@@ -465,7 +477,7 @@ def api_public_bill(table_id):
 def api_public_reserve():
     public_limit("reserve", 5, 600)
     with storage.transaction() as db:
-        services.public_reservation(db, body())
+        services.public_reservation(db, body(), g.user)
     return ok(message="ส่งคำขอจองแล้ว ร้านจะติดต่อกลับเพื่อยืนยัน")
 
 

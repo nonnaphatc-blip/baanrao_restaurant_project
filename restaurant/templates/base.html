@@ -13,6 +13,7 @@
   <a class="brand" href="{% if user and user.role == 'admin' %}/admin{% elif user and user.role == 'cashier' %}/pos{% elif user and user.role == 'kitchen' %}/kitchen{% else %}/{% endif %}">◐ {{ brand }}</a>
   <nav>
     {% if not user or user.role == 'customer' %}<a href="/table-code">เข้ารหัสโต๊ะ</a><a href="/reserve">จองโต๊ะ</a><a href="/popular">เมนูขายดี</a>{% endif %}
+    {% if user and user.role == 'customer' %}<a href="/customer-notifications">แจ้งเตือนการจอง</a>{% endif %}
     {% if user %}
       {% if user.role == 'admin' %}<a href="/admin">แดชบอร์ด</a><a href="/pos">POS</a><a href="/kitchen">ครัว</a>
       {% elif user.role == 'cashier' %}<a href="/pos">POS</a><a href="/admin">จองโต๊ะ / คิว</a><a href="/kitchen">ครัว</a>

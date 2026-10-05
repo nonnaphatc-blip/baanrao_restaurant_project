@@ -382,6 +382,15 @@ def update_entity(db, entity, id_, data):
         changes.append("เปลี่ยนรหัสผ่าน")
     if "recipe" in row and old.get("recipe") != row["recipe"]:
         changes.append("แก้สูตรอาหาร")
+    if entity == "reservations":
+        prior_status = old.get("status", "pending")
+        next_status = row.get("status", prior_status)
+        if prior_status == "pending" and next_status in ("confirmed", "cancelled"):
+            old.setdefault("status_notifications", []).append({
+                "status": next_status, "at": now_str(),
+                "text": "ร้านยืนยันการจองโต๊ะของคุณแล้ว" if next_status == "confirmed"
+                        else "ร้านปฏิเสธคำขอจองโต๊ะของคุณ",
+            })
     old.update(row)
     return public_row(entity, old), ", ".join(changes) or "ไม่มีการเปลี่ยนแปลง"
 
@@ -461,12 +470,14 @@ def events_for(db, role, since):
     last = db["seq"].get("events", 0)
     if since < 0:
         return {"last": last, "events": []}
-    targets = {"kitchen": ("kitchen",), "cashier": ("staff",), "admin": ("kitchen", "staff")}[role]
+    # Cashiers can access the kitchen screen too, so they need new-order alerts.
+    # Keep order events in one stream to avoid duplicate alerts for admins.
+    targets = {"kitchen": ("kitchen",), "cashier": ("staff", "kitchen"), "admin": ("kitchen", "staff")}[role]
     return {"last": last, "events": [e for e in db["events"] if e["id"] > since and e["target"] in targets]}
 
 
 def notification_targets(role):
-    return {"kitchen": ("kitchen",), "cashier": ("staff",), "admin": ("kitchen", "staff")}[role]
+    return {"kitchen": ("kitchen",), "cashier": ("staff", "kitchen"), "admin": ("kitchen", "staff")}[role]
 
 
 def notification_view(db, user, session_id):
@@ -817,14 +828,35 @@ def customer_order(db, table_id, token, items):
         add_item(db, table_id, line.get("menu_id"), line.get("qty"), line.get("options"), line.get("note"), "customer")
 
 
-def public_reservation(db, data):
+def public_reservation(db, data, customer=None):
     fields = {k: data.get(k) for k in ("name", "phone", "date", "time", "party", "note")}
     fields["status"] = "pending"
     if valid_date(fields["date"]) is None or fields["date"] < today_str():
         raise AppError("กรุณาเลือกวันที่ตั้งแต่วันนี้เป็นต้นไป")
     row, _ = create_entity(db, "reservations", fields)
+    reservation = next(r for r in db["reservations"] if r["id"] == row["id"])
+    reservation["status_notifications"] = []
+    if customer and customer.get("role") == "customer":
+        reservation["customer_id"] = customer["id"]
     add_event(db, "staff", f"จองโต๊ะใหม่: {row['name']} {row['party']} คน {row['date']} {row['time']}")
     return row
+
+
+def customer_reservation_notifications(db, user):
+    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
+    if not phone:
+        return []
+    rows = []
+    for reservation in db["reservations"]:
+        if reservation.get("customer_id") != user["id"] and (
+                not phone or re.sub(r"\D", "", str(reservation.get("phone") or "")) != phone):
+            continue
+        for notice in reservation.get("status_notifications", []):
+            rows.append({"id": f"{reservation['id']}-{notice['at']}",
+                         "reservation_id": reservation["id"], "date": reservation.get("date"),
+                         "time": reservation.get("time"), "party": reservation.get("party"),
+                         "text": notice["text"], "at": notice["at"]})
+    return sorted(rows, key=lambda item: item["at"], reverse=True)
 
 
 def public_queue(db, data):
