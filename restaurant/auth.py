@@ -56,8 +56,13 @@ def find_user(db, username):
 
 # ---------- rate limiting ----------
 def client_ip():
-    forwarded = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-    return forwarded or request.remote_addr or "?"
+    # Vercel overwrites this header with the public client IP. Elsewhere,
+    # X-Forwarded-For may be supplied by the client, so use the socket peer.
+    if os.environ.get("VERCEL"):
+        forwarded = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if forwarded:
+            return forwarded
+    return request.remote_addr or "?"
 
 
 def take_rate_limit(key, limit, window):
