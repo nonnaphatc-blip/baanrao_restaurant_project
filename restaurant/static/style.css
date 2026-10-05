@@ -161,15 +161,19 @@ html[data-theme="dark"] .modal::backdrop{background:#0009}
 html[data-theme="dark"] .btn.danger{color:#ff9d94;border-color:#65413d}
 html[data-theme="dark"] .toast{background:#302a24;color:#f4eee8;border:1px solid #4b4138;box-shadow:0 6px 20px #0005}
 html[data-theme="dark"] .toast.bad{background:#482926;color:#ffb5ac;border-color:#65413d}
+html[data-theme="dark"] .auth-message{background:#482926;color:#ffb5ac;border:1px solid #65413d}
+html[data-theme="dark"] .auth-message.success{background:#23402c;color:#a8e3b2;border-color:#31583c}
 /* Role labels in the users tab */
 .pill.admin{background:#eee5ff;color:#6336a0}
 .pill.cashier{background:#e1f2ef;color:#176c65}
 .pill.kitchen{background:#e4edff;color:#315aa3}
 .pill.customer{background:#f1eee9;color:#62594e}
+.pill.seated{background:#dcecff;color:#24558c}
 html[data-theme="dark"] .pill.admin{background:#39294d;color:#d9baff}
 html[data-theme="dark"] .pill.cashier{background:#203c38;color:#a4e0d7}
 html[data-theme="dark"] .pill.kitchen{background:#263653;color:#b3caff}
 html[data-theme="dark"] .pill.customer{background:#38322c;color:#d6c9bb}
+html[data-theme="dark"] .pill.seated{background:#263653;color:#b3caff}
 /* Fixed sun/moon switch */
 .theme-switch{position:fixed;right:1.25rem;bottom:1.25rem;z-index:100;width:66px;height:38px;padding:3px;border:1px solid #d99b4b;border-radius:999px;background:#f4c66e;cursor:pointer;box-shadow:0 4px 16px #0002;transition:background-color .2s ease,border-color .2s ease}
 .theme-switch:focus-visible{outline:3px solid #e76f3266;outline-offset:3px}

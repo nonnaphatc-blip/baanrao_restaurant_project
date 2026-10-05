@@ -264,7 +264,8 @@ def release_table(db, table):
 
 def list_entity(db, entity, params):
     cfg = ENTITIES[entity]
-    rows = [public_row(entity, r) for r in db[entity]]
+    rows = [public_row(entity, r) for r in db[entity]
+            if entity != "reservations" or not r.get("crud_hidden")]
     if entity == "reservations":
         for row in rows:
             if row.get("status") not in ("pending", "confirmed", "seated", "cancelled"):
@@ -420,6 +421,9 @@ def update_entity(db, entity, id_, data):
                 "text": "ร้านยืนยันการจองโต๊ะของคุณแล้ว" if next_status == "confirmed"
                         else "ร้านปฏิเสธคำขอจองโต๊ะของคุณ",
             })
+        if prior_status != next_status and next_status == "cancelled":
+            row["cancelled_at"] = now_str()
+            row["cancelled_by"] = "staff"
     old.update(row)
     return public_row(entity, old), ", ".join(changes) or "ไม่มีการเปลี่ยนแปลง"
 
@@ -761,8 +765,26 @@ def checkout(db, order_id, data, cashier, commit=True):
         table["status"] = "occupied"
     else:
         order["status"], table["status"] = "paid", "free"
+        complete_checked_out_reservations(db, table["id"])
         rotate_table_access(db, table)
     return bill
+
+
+def complete_checked_out_reservations(db, table_id):
+    now = datetime.strptime(now_str(), FMT)
+    for reservation in db["reservations"]:
+        if (reservation.get("table_id") != table_id or
+                reservation.get("status") not in ("pending", "confirmed", "seated") or
+                reservation.get("date") != today_str()):
+            continue
+        try:
+            reservation_time = datetime.strptime(f"{reservation['date']} {reservation['time']}:00", FMT)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if reservation_time <= now:
+            reservation["status"] = "seated"
+            reservation["completed_at"] = now_str()
+            reservation["crud_hidden"] = True
 
 
 # ---------- reports ----------
@@ -957,6 +979,25 @@ def cancel_customer_reservation(db, user, reservation_id):
         account["reservation_cooldown_until"] = time.time() + 60
     add_event(db, "staff", f"ลูกค้ายกเลิกการจอง: {reservation['name']} {reservation['party']} คน {reservation['date']} {reservation['time']}")
     return {"cooldown_seconds": 60}
+
+
+def prune_cancelled_reservations(db):
+    now = datetime.strptime(now_str(), FMT)
+    hidden = 0
+    for reservation in db["reservations"]:
+        if reservation.get("status") != "cancelled" or reservation.get("crud_hidden"):
+            continue
+        cancelled_at = (reservation.get("cancelled_at") or
+                        next((item.get("at") for item in reversed(reservation.get("status_notifications", []))), None) or
+                        reservation.get("created_at"))
+        try:
+            cancelled = datetime.strptime(cancelled_at, FMT)
+        except (TypeError, ValueError):
+            cancelled = now - timedelta(minutes=2)
+        if now - cancelled >= timedelta(minutes=2):
+            reservation["crud_hidden"] = True
+            hidden += 1
+    return hidden
 
 
 def public_queue(db, data):

@@ -162,7 +162,11 @@ async function openTab(t) {
   $('#q').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { if (generation !== viewGeneration || S !== state) return; state.q = e.target.value; state.page = 1; run(() => list(generation)); }, 300); };
   if ($('#f')) $('#f').onchange = e => { if (generation !== viewGeneration || S !== state) return; state.filter = e.target.value; state.page = 1; run(() => list(generation)); };
   await list(generation);
-  if (generation === viewGeneration && S === state && t === 'tables' && role === 'admin') {
+  if (generation === viewGeneration && S === state && t === 'reservations') {
+    tableStatusTimer = setInterval(() => {
+      if (!document.hidden && generation === viewGeneration && S === state && !$('dialog[open]')) run(() => list(generation));
+    }, 2000);
+  } else if (generation === viewGeneration && S === state && t === 'tables' && role === 'admin') {
     tableStatusTimer = setInterval(() => {
       if (!document.hidden && generation === viewGeneration && S === state && !$('dialog[open]')) run(() => list(generation));
     }, 2500);

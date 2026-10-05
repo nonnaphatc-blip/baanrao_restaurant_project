@@ -586,7 +586,14 @@ def api_upload():
 @app.get("/api/admin/<entity>")
 @role_required("admin", "cashier")
 def api_list(entity):
-    return ok(**services.list_entity(storage.load(), entity_or_404(entity), request.args))
+    entity = entity_or_404(entity)
+    if entity == "reservations":
+        with storage.transaction() as db:
+            services.prune_cancelled_reservations(db)
+            result = services.list_entity(db, entity, request.args)
+    else:
+        result = services.list_entity(storage.load(), entity, request.args)
+    return ok(**result)
 
 
 @app.post("/api/admin/<entity>")
