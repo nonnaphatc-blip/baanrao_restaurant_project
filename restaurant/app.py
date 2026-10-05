@@ -213,7 +213,11 @@ def bound_customer_table():
     try:
         table_id = int(access.get("id"))
         token = str(access.get("token", ""))
-        return services.check_table_token(storage.load(), table_id, token)
+        table = services.check_table_token(storage.load(), table_id, token)
+        if table["status"] == "free":
+            session.pop("customer_table", None)
+            return None
+        return table
     except (TypeError, ValueError, AppError):
         session.pop("customer_table", None)
         return None
@@ -226,9 +230,16 @@ def bind_customer_table(table, db):
             current = services.check_table_token(db, int(access.get("id")), str(access.get("token", "")))
         except (TypeError, ValueError, AppError):
             session.pop("customer_table", None)
+            current = None
         else:
-            if current["id"] != table["id"]:
-                raise AppError("เซสชันนี้เข้าใช้งานโต๊ะอื่นอยู่แล้ว กรุณากลับไปยังโต๊ะเดิม", 409)
+            if current["status"] == "free":
+                session.pop("customer_table", None)
+                current = None
+        if current is not None and current["id"] != table["id"]:
+            raise AppError("เซสชันนี้เข้าใช้งานโต๊ะอื่นอยู่แล้ว กรุณากลับไปยังโต๊ะเดิม", 409)
+    if table["status"] == "free":
+        session.pop("customer_table", None)
+        raise AppError("โต๊ะนี้ถูกเคลียร์แล้ว กรุณาเข้ารหัสโต๊ะอีกครั้ง", 410)
     session["customer_table"] = {"id": table["id"], "token": table["qr_token"]}
 
 
@@ -265,6 +276,8 @@ def customer_table(table_id):
         return redirect(url_for("table_code", expired="1"))
     if current is not None and (current["id"] != table_id or current["qr_token"] != token):
         return redirect(url_for("customer_table", table_id=current["id"], k=current["qr_token"]))
+    if current is not None:
+        return render_template("order.html", table=current, token=token)
     try:
         with storage.transaction() as db:
             table = services.enter_table(db, services.check_table_token(db, table_id, token))
