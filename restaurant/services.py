@@ -248,6 +248,17 @@ def rotate_table_access(db, table):
     table["access_code"] = new_table_access(db)
 
 
+def release_table(db, table):
+    """Mark a table free only when no unpaid items remain, then revoke its old access."""
+    order = open_order(db, table["id"])
+    if live_items(order):
+        raise AppError("โต๊ะนี้ยังมีรายการที่ยังไม่ชำระเงิน")
+    if order:
+        order["status"] = "void"
+    table["status"] = "free"
+    rotate_table_access(db, table)
+
+
 def list_entity(db, entity, params):
     cfg = ENTITIES[entity]
     rows = [public_row(entity, r) for r in db[entity]]
@@ -305,9 +316,12 @@ def _prepare(db, entity, row, data, old):
             row["session_version"] = old.get("session_version", 0) + 1 if old else 0
         if old:
             _check_admin_left(db, old, row)
-    elif entity == "tables" and old is None:
-        row["qr_token"] = secrets.token_hex(16)
-        row["access_code"] = new_table_access(db)
+    elif entity == "tables":
+        if old is None:
+            row["qr_token"] = secrets.token_hex(16)
+            row["access_code"] = new_table_access(db)
+        elif old.get("status") != "free" and row.get("status", old.get("status")) == "free":
+            release_table(db, old)
     elif entity == "reservations":
         for key, fmt in (("date", "%Y-%m-%d"), ("time", "%H:%M")):
             if key in row:
@@ -602,19 +616,16 @@ def set_table_status(db, table_id, status):
     table = need(db, "tables", table_id, "ไม่พบโต๊ะ")
     if status not in TABLE_STATUS:
         raise AppError("สถานะโต๊ะไม่ถูกต้อง")
-    order = open_order(db, table_id)
     if status == "free":
-        if live_items(order):
-            raise AppError("โต๊ะนี้ยังมีรายการที่ยังไม่ชำระเงิน")
-        if order:
-            order["status"] = "void"
+        release_table(db, table)
     elif status == "billing":
+        order = open_order(db, table_id)
         if not live_items(order):
             raise AppError("โต๊ะนี้ยังไม่มีรายการสั่ง")
         add_event(db, "staff", f"{table['name']} ขอเช็คบิล")
-    table["status"] = status
-    if status == "free":
-        rotate_table_access(db, table)
+        table["status"] = status
+    elif status == "occupied":
+        table["status"] = status
     return f"{table['name']} → {status}"
 
 

@@ -92,7 +92,8 @@ def security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "same-origin"
-    if request.path.startswith("/api/"):
+    if (request.path.startswith("/api/") or request.path == "/table-code" or
+            request.path.startswith("/t/")):
         resp.headers["Cache-Control"] = "no-store"
     return resp
 
@@ -190,11 +191,13 @@ def popular():
 @app.route("/table-code", methods=("GET", "POST"))
 @role_required(*auth.ROLES)
 def table_code():
+    had_table_access = "customer_table" in session
     table = bound_customer_table()
     if table is not None:
         return redirect(url_for("customer_table", table_id=table["id"], k=table["qr_token"]))
     if request.method == "GET":
-        return render_template("table_code.html", expired=request.args.get("expired") == "1")
+        expired = request.args.get("expired") == "1" or had_table_access
+        return render_template("table_code.html", expired=expired)
     public_limit("table-code", 10, 60)
     with storage.transaction() as db:
         table = services.check_table_code(db, request.form.get("code", ""))
@@ -256,12 +259,20 @@ def notifications():
 @app.get("/t/<int:table_id>")
 def customer_table(table_id):
     token = request.args.get("k", "")
+    had_table_access = "customer_table" in session
     current = bound_customer_table()
+    if had_table_access and current is None:
+        return redirect(url_for("table_code", expired="1"))
     if current is not None and (current["id"] != table_id or current["qr_token"] != token):
         return redirect(url_for("customer_table", table_id=current["id"], k=current["qr_token"]))
-    with storage.transaction() as db:
-        table = services.enter_table(db, services.check_table_token(db, table_id, token))
-        bind_customer_table(table, db)
+    try:
+        with storage.transaction() as db:
+            table = services.enter_table(db, services.check_table_token(db, table_id, token))
+            bind_customer_table(table, db)
+    except AppError as error:
+        if error.status == 404:
+            return redirect(url_for("table_code", expired="1"))
+        raise
     return render_template("order.html", table=table, token=token)
 
 
