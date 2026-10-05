@@ -16,7 +16,7 @@
     {% if user and user.role == 'customer' %}<a href="/customer-notifications">แจ้งเตือนการจอง</a>{% endif %}
     {% if user %}
       {% if user.role == 'admin' %}<a href="/admin">แดชบอร์ด</a><a href="/pos">POS</a><a href="/kitchen">ครัว</a>
-      {% elif user.role == 'cashier' %}<a href="/pos">POS</a><a href="/admin">จองโต๊ะ / คิว</a><a href="/kitchen">ครัว</a>
+      {% elif user.role == 'cashier' %}<a href="/pos">POS</a><a href="/admin?tab=reservations">จองโต๊ะ</a><a href="/admin?tab=queue">คิว</a><a href="/kitchen">ครัว</a>
       {% elif user.role == 'kitchen' %}<a href="/kitchen">ครัว</a>{% endif %}
 {% if user.role in ('admin', 'cashier', 'kitchen') %}<a class="notification-link" href="/notifications">การแจ้งเตือน<span class="notification-dot" id="notificationDot" hidden></span></a>{% endif %}
       <a href="/change-password">เปลี่ยนรหัสผ่าน</a>

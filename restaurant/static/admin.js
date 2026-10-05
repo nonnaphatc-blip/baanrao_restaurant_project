@@ -311,5 +311,7 @@ run(async () => {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<button class="btn sm" data-act="tab" data-t="${k}">${esc(l)}</button>`).join('');
   startEvents();
   run(ensureLookups);
-  await openTab(TABS[0][0]);
+  const requestedTab = new URLSearchParams(location.search).get('tab');
+  const initialTab = TABS.some(([key]) => key === requestedTab) ? requestedTab : TABS[0][0];
+  await openTab(initialTab);
 });
