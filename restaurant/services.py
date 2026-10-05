@@ -74,7 +74,7 @@ SCHEMAS = {
     "menu": {"name": F(str, "ชื่อเมนู", req=True, max=80),
              "category_id": F(int, "หมวดหมู่", req=True, min=1),
              "price": F(float, "ราคา", req=True, min=0, max=100000),
-             "unit": F(str, "หน่วยเมนู", max=24, default="จาน"),
+             "unit": F(str, "หน่วยเมนู", max=24, default="จาน", letters=True),
              "description": F(str, "รายละเอียด", max=200, default=""),
              "image": F(str, "รูปภาพ", pattern=IMAGE_RE, default=""),
              "available": F(bool, "สถานะมีของ", default=True),
@@ -85,7 +85,7 @@ SCHEMAS = {
                "seats": F(int, "จำนวนที่นั่ง", min=1, max=50, default=4),
                "status": F(str, "สถานะโต๊ะ", choices=TABLE_STATUS, default="free")},
     "ingredients": {"name": F(str, "ชื่อวัตถุดิบ", req=True, max=50),
-                    "unit": F(str, "หน่วย", req=True, max=10),
+                    "unit": F(str, "หน่วย", req=True, max=10, letters=True),
                     "stock": F(float, "สต็อก", min=0, max=10000000, default=0.0),
                     "min_stock": F(float, "สต็อกขั้นต่ำ", min=0, max=10000000, default=0.0)},
     "users": {"username": F(str, "ชื่อผู้ใช้", req=True, pattern=USERNAME_RE),
@@ -143,6 +143,8 @@ def _convert(value, rule):
         if kind is str:
             value = str(value).strip()
             if len(value) > rule.get("max", 200):
+                raise ValueError
+            if rule.get("letters") and not any(char.isalpha() for char in value):
                 raise ValueError
             if rule.get("pattern") and not re.fullmatch(rule["pattern"], value):
                 raise ValueError
@@ -298,6 +300,10 @@ def _check_admin_left(db, old, row):
 
 def _prepare(db, entity, row, data, old):
     """Entity specific rules. Runs before anything is written."""
+    if entity in ("menu", "ingredients"):
+        unit = row.get("unit", old.get("unit") if old else None)
+        if unit and not any(char.isalpha() for char in unit):
+            raise AppError("หน่วยต้องมีตัวอักษร เช่น จาน, ขวด หรือ กรัม")
     field = UNIQUE.get(entity)
     if field and field in row:
         me = old["id"] if old else None
