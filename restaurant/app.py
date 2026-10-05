@@ -434,9 +434,15 @@ def api_public_order(table_id):
 def api_public_send(table_id):
     public_limit("order")
     data = body()
-    with storage.transaction() as db:
-        bind_customer_table(services.check_table_token(db, table_id, data.get("k", "")), db)
-        services.customer_order(db, table_id, data.get("k", ""), data.get("items"))
+    try:
+        with storage.transaction() as db:
+            bind_customer_table(services.check_table_token(db, table_id, data.get("k", "")), db)
+            services.customer_order(db, table_id, data.get("k", ""), data.get("items"))
+    except AppError as error:
+        # Keep inventory terminology on staff screens; customers only need a clear next step.
+        if error.message.startswith("วัตถุดิบไม่พอ:"):
+            raise AppError("ขออภัย เมนูนี้มีไม่พอแล้ว ลองลดจำนวนหรือเลือกเมนูอื่นนะ", error.status) from None
+        raise
     return ok()
 
 
