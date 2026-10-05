@@ -152,6 +152,10 @@ def home():
 @app.get("/reserve")
 @role_required(*auth.ROLES)
 def reserve():
+    if g.user["role"] == "customer":
+        table = bound_customer_table()
+        if table is not None:
+            return redirect(url_for("customer_table", table_id=table["id"], k=table["qr_token"]))
     return render_template("reserve.html", today=storage.today_str())
 
 
@@ -475,6 +479,8 @@ def api_public_bill(table_id):
 @app.post("/api/public/reservations")
 @role_required(*auth.ROLES)
 def api_public_reserve():
+    if g.user["role"] == "customer" and bound_customer_table() is not None:
+        raise AppError("คุณกำลังใช้งานหน้าออเดอร์โต๊ะอยู่ จึงไม่สามารถจองโต๊ะซ้ำได้", 409)
     public_limit("reserve", 5, 600)
     with storage.transaction() as db:
         services.public_reservation(db, body(), g.user)
