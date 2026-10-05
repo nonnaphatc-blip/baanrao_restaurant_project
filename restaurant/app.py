@@ -190,12 +190,43 @@ def popular():
 @app.route("/table-code", methods=("GET", "POST"))
 @role_required(*auth.ROLES)
 def table_code():
+    table = bound_customer_table()
+    if table is not None:
+        return redirect(url_for("customer_table", table_id=table["id"], k=table["qr_token"]))
     if request.method == "GET":
         return render_template("table_code.html", expired=request.args.get("expired") == "1")
     public_limit("table-code", 10, 60)
     with storage.transaction() as db:
         table = services.check_table_code(db, request.form.get("code", ""))
+        bind_customer_table(table, db)
     return redirect(url_for("customer_table", table_id=table["id"], k=table["qr_token"]))
+
+
+def bound_customer_table():
+    """Return this browser session's table while its QR token remains valid."""
+    access = session.get("customer_table")
+    if not isinstance(access, dict):
+        return None
+    try:
+        table_id = int(access.get("id"))
+        token = str(access.get("token", ""))
+        return services.check_table_token(storage.load(), table_id, token)
+    except (TypeError, ValueError, AppError):
+        session.pop("customer_table", None)
+        return None
+
+
+def bind_customer_table(table, db):
+    access = session.get("customer_table")
+    if isinstance(access, dict):
+        try:
+            current = services.check_table_token(db, int(access.get("id")), str(access.get("token", "")))
+        except (TypeError, ValueError, AppError):
+            session.pop("customer_table", None)
+        else:
+            if current["id"] != table["id"]:
+                raise AppError("เซสชันนี้เข้าใช้งานโต๊ะอื่นอยู่แล้ว กรุณากลับไปยังโต๊ะเดิม", 409)
+    session["customer_table"] = {"id": table["id"], "token": table["qr_token"]}
 
 
 @app.get("/pos")
@@ -225,8 +256,12 @@ def notifications():
 @app.get("/t/<int:table_id>")
 def customer_table(table_id):
     token = request.args.get("k", "")
+    current = bound_customer_table()
+    if current is not None and (current["id"] != table_id or current["qr_token"] != token):
+        return redirect(url_for("customer_table", table_id=current["id"], k=current["qr_token"]))
     with storage.transaction() as db:
         table = services.enter_table(db, services.check_table_token(db, table_id, token))
+        bind_customer_table(table, db)
     return render_template("order.html", table=table, token=token)
 
 
@@ -367,6 +402,7 @@ def api_notification_read(event_id):
 def api_public_order(table_id):
     db = storage.load()
     table = services.check_table_token(db, table_id, request.args.get("k", ""))
+    bind_customer_table(table, db)
     return ok(table=table["name"], billing=table["status"] == "billing", **services.order_view(db, table_id))
 
 
@@ -375,6 +411,7 @@ def api_public_send(table_id):
     public_limit("order")
     data = body()
     with storage.transaction() as db:
+        bind_customer_table(services.check_table_token(db, table_id, data.get("k", "")), db)
         services.customer_order(db, table_id, data.get("k", ""), data.get("items"))
     return ok()
 
@@ -384,6 +421,7 @@ def api_public_bill(table_id):
     public_limit("bill")
     with storage.transaction() as db:
         table = services.check_table_token(db, table_id, body().get("k", ""))
+        bind_customer_table(table, db)
         if table["status"] == "billing":
             raise AppError("ส่งคำขอเช็คบิลแล้ว กรุณารอพนักงาน", 409)
         if not services.live_items(services.open_order(db, table_id)):

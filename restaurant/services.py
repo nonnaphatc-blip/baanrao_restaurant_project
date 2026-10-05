@@ -242,6 +242,12 @@ def ensure_table_access(db):
             table["access_code"] = new_table_access(db)
 
 
+def rotate_table_access(db, table):
+    """Invalidate customer sessions and printed access details for a table."""
+    table["qr_token"] = secrets.token_hex(16)
+    table["access_code"] = new_table_access(db)
+
+
 def list_entity(db, entity, params):
     cfg = ENTITIES[entity]
     rows = [public_row(entity, r) for r in db[entity]]
@@ -607,6 +613,8 @@ def set_table_status(db, table_id, status):
             raise AppError("โต๊ะนี้ยังไม่มีรายการสั่ง")
         add_event(db, "staff", f"{table['name']} ขอเช็คบิล")
     table["status"] = status
+    if status == "free":
+        rotate_table_access(db, table)
     return f"{table['name']} → {status}"
 
 
@@ -627,6 +635,8 @@ def move_table(db, src_id, dst_id, merge):
             dst_order["status"] = "void"
         src_order["table_id"] = dst_id
     dst["status"], src["status"] = "occupied", "free"
+    rotate_table_access(db, src)
+    rotate_table_access(db, dst)
     return f"{'รวม' if merge else 'ย้าย'}โต๊ะ {src['name']} → {dst['name']}"
 
 
@@ -694,8 +704,7 @@ def checkout(db, order_id, data, cashier, commit=True):
         table["status"] = "occupied"
     else:
         order["status"], table["status"] = "paid", "free"
-        table["qr_token"] = secrets.token_hex(16)
-        table["access_code"] = new_table_access(db)
+        rotate_table_access(db, table)
     return bill
 
 
