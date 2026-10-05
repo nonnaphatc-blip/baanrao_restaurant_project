@@ -207,6 +207,30 @@ html[data-theme="light"] .tabs .btn.on{background:var(--green);border-color:var(
 .kpi{border-top:0}
 .kpi>.card{border-top:3px solid var(--green)}
 .bar i{background:var(--green)}
+.reservation-current{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem 0;border-top:1px solid var(--line)}
+.reservation-feedback{margin:0}
+@media(max-width:520px){.reservation-current{align-items:stretch;flex-direction:column}.reservation-current .btn{width:100%}}
+
+/* Small interaction cues across menus, cards, and live alerts */
+@keyframes alert-pulse{0%,100%{box-shadow:0 0 0 0 #dc262633}50%{box-shadow:0 0 0 5px #dc262600}}
+@keyframes pill-pop{0%{transform:scale(.94);opacity:.6}100%{transform:scale(1);opacity:1}}
+.notification-dot{animation:alert-pulse 1.8s ease-out infinite}
+.pill{transition:transform .18s ease,filter .18s ease}
+.pill.pending,.pill.confirmed,.pill.ready,.pill.cancelled{animation:pill-pop .28s ease-out both}
+.tabs .btn{transition:transform .18s ease,background-color .18s ease,border-color .18s ease,color .18s ease}
+.tabs .btn.on{transform:translateY(-2px);box-shadow:0 4px 12px #3c26121a}
+@media(hover:hover){
+  .card:hover{transform:translateY(-2px)}
+  .item img{transition:transform .3s cubic-bezier(.2,.7,.25,1)}
+  .item:hover img{transform:scale(1.035)}
+  .tbl tr{transition:background-color .16s ease}
+  .tbl tbody tr:hover{background:#e76f320c}
+}
+html[data-theme="dark"] .tbl tbody tr:hover{background:#ffb58a0d}
+@media(prefers-reduced-motion:reduce){
+  .notification-dot{animation:none}
+  .tabs .btn.on{transform:none}
+}
 
 /* Gentle motion for page entry and interactive feedback */
 @keyframes page-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}

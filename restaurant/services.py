@@ -4,6 +4,7 @@ import math
 import os
 import re
 import secrets
+import time
 from datetime import datetime, timedelta
 
 from auth import PHONE_RE, ROLES, USERNAME_RE, check_password_policy, find_user, hash_password
@@ -857,6 +858,11 @@ def customer_order(db, table_id, token, items):
 
 
 def public_reservation(db, data, customer=None):
+    if customer and customer.get("role") == "customer":
+        account = next((user for user in db["users"] if user["id"] == customer["id"]), None)
+        wait = max(0, math.ceil((account or {}).get("reservation_cooldown_until", 0) - time.time()))
+        if wait:
+            raise AppError(f"ยกเลิกการจองแล้ว กรุณารออีก {wait} วินาทีก่อนจองใหม่")
     fields = {k: data.get(k) for k in ("name", "phone", "date", "time", "party", "note")}
     fields["status"] = "pending"
     if valid_date(fields["date"]) is None or fields["date"] < today_str():
@@ -868,7 +874,7 @@ def public_reservation(db, data, customer=None):
                       and reservation.get("time") == fields["time"]
                       and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone), None)
     if duplicate:
-        return duplicate
+        raise AppError("คุณทำการจองช่วงเวลานี้ไปแล้ว หากต้องการเปลี่ยนแปลง กรุณายกเลิกการจองเดิมก่อน")
     row, _ = create_entity(db, "reservations", fields)
     reservation = next(r for r in db["reservations"] if r["id"] == row["id"])
     reservation["status_notifications"] = []
@@ -914,6 +920,43 @@ def customer_has_active_reservation(db, user):
          (phone and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone))
         for reservation in db["reservations"]
     )
+
+
+def customer_reservation_panel(db, user):
+    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
+    reservations = [reservation for reservation in db["reservations"]
+                    if reservation.get("status", "pending") in ("pending", "confirmed")
+                    and (reservation.get("customer_id") == user["id"] or
+                         (phone and re.sub(r"\D", "", str(reservation.get("phone") or "")) == phone))]
+    reservations.sort(key=lambda reservation: (reservation.get("date", ""), reservation.get("time", "")))
+    account = next((row for row in db["users"] if row["id"] == user["id"]), {})
+    cooldown = max(0, math.ceil(account.get("reservation_cooldown_until", 0) - time.time()))
+    return {"reservations": [{"id": row["id"], "date": row.get("date"), "time": row.get("time"),
+                               "party": row.get("party"), "status": row.get("status", "pending"),
+                               "name": row.get("name")} for row in reservations],
+            "cooldown_seconds": cooldown}
+
+
+def cancel_customer_reservation(db, user, reservation_id):
+    phone = re.sub(r"\D", "", str(user.get("phone") or ""))
+    reservation = next((row for row in db["reservations"] if row["id"] == to_int(reservation_id, -1)), None)
+    if reservation is None or (reservation.get("customer_id") != user["id"] and
+                               (not phone or re.sub(r"\D", "", str(reservation.get("phone") or "")) != phone)):
+        raise AppError("ไม่พบรายการจองของคุณ", 404)
+    if reservation.get("status", "pending") not in ("pending", "confirmed"):
+        raise AppError("รายการจองนี้ยกเลิกไปแล้วหรือไม่สามารถยกเลิกได้", 409)
+    reservation["status"] = "cancelled"
+    reservation["cancelled_by"] = "customer"
+    reservation["cancelled_at"] = now_str()
+    reservation.setdefault("status_notifications", []).append({
+        "status": "cancelled", "at": reservation["cancelled_at"],
+        "text": "คุณยกเลิกการจองโต๊ะนี้แล้ว",
+    })
+    account = next((row for row in db["users"] if row["id"] == user["id"]), None)
+    if account is not None:
+        account["reservation_cooldown_until"] = time.time() + 60
+    add_event(db, "staff", f"ลูกค้ายกเลิกการจอง: {reservation['name']} {reservation['party']} คน {reservation['date']} {reservation['time']}")
+    return {"cooldown_seconds": 60}
 
 
 def public_queue(db, data):

@@ -92,6 +92,11 @@ document.addEventListener('submit', e => {
       const res = await api(form.dataset.api, 'POST', data);
       toast(res.message || 'สำเร็จ');
       form.reset();
+      form.dispatchEvent(new CustomEvent('api:success'));
+    } catch (error) {
+      const feedback = $('[data-form-feedback]', form);
+      if (feedback) { feedback.textContent = error.message; feedback.hidden = false; }
+      throw error;
     } finally {
       delete form.dataset.submitting;
       if (submit) { submit.disabled = false; submit.textContent = originalText; }

@@ -15,7 +15,14 @@
       <label>จำนวนคน<input type="number" name="party" min="1" max="50" value="2" required></label>
       <label>หมายเหตุ<input name="note" maxlength="100"></label>
       <button class="btn primary">ส่งคำขอจอง</button>
+      <p class="reserve-feedback auth-message" data-form-feedback role="alert" hidden></p>
     </form>
+    {% if user.role == 'customer' %}
+    <section class="card stack" id="myReservations" aria-live="polite">
+      <h2>การจองของฉัน</h2>
+      <p class="muted">กำลังตรวจสอบรายการจอง…</p>
+    </section>
+    {% endif %}
     <form class="card stack" data-api="/api/public/queue">
       <h2>รับคิวหน้าร้าน</h2>
       <p class="muted">รับคิวออนไลน์ แล้วมาตามเวลาที่ร้านเรียก</p>
@@ -27,3 +34,4 @@
   </div>
 </section>
 {% endblock %}
+{% block scripts %}{% if user.role == 'customer' %}<script src="{{ url_for('static', filename='reserve.js') }}"></script>{% endif %}{% endblock %}

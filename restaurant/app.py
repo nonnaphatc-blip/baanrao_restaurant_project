@@ -152,8 +152,6 @@ def home():
 @app.get("/reserve")
 @role_required(*auth.ROLES)
 def reserve():
-    if g.user["role"] == "customer" and services.customer_has_active_reservation(storage.load(), g.user):
-        return redirect("/customer-notifications")
     return render_template("reserve.html", today=storage.today_str())
 
 
@@ -481,6 +479,20 @@ def api_public_reserve():
     with storage.transaction() as db:
         services.public_reservation(db, body(), g.user)
     return ok(message="ส่งคำขอจองแล้ว ร้านจะติดต่อกลับเพื่อยืนยัน")
+
+
+@app.get("/api/customer/reservations")
+@role_required("customer")
+def api_customer_reservations():
+    return ok(**services.customer_reservation_panel(storage.load(), g.user))
+
+
+@app.post("/api/customer/reservations/<int:reservation_id>/cancel")
+@role_required("customer")
+def api_customer_cancel_reservation(reservation_id):
+    with storage.transaction() as db:
+        result = services.cancel_customer_reservation(db, g.user, reservation_id)
+    return ok(**result, message="ยกเลิกการจองแล้ว สามารถจองใหม่ได้หลังรอ 1 นาที")
 
 
 @app.post("/api/public/queue")
