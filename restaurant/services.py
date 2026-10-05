@@ -874,15 +874,8 @@ def public_reservation(db, data, customer=None):
     if valid_date(fields["date"]) is None or fields["date"] < today_str():
         raise AppError("กรุณาเลือกวันที่ตั้งแต่วันนี้เป็นต้นไป")
     customer_id = customer["id"] if customer and customer.get("role") == "customer" else None
-    if customer_id:
-        duplicate = next((reservation for reservation in db["reservations"]
-                          if reservation.get("status") in ("pending", "confirmed")
-                          and reservation.get("date") == fields["date"]
-                          and reservation.get("time") == fields["time"]
-                          and reservation.get("customer_id") == customer_id
-                          and reservation.get("customer_account_owned") is True), None)
-        if duplicate:
-            raise AppError("คุณทำการจองช่วงเวลานี้ไปแล้ว หากต้องการเปลี่ยนแปลง กรุณายกเลิกการจองเดิมก่อน")
+    if customer_id and customer_has_active_reservation(db, customer):
+        raise AppError("คุณมีรายการจองอยู่แล้ว ยกเลิกรายการเดิมด้านล่างก่อนจึงจะจองใหม่ได้")
     row, _ = create_entity(db, "reservations", fields)
     reservation = next(r for r in db["reservations"] if r["id"] == row["id"])
     reservation["status_notifications"] = []
