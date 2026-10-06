@@ -83,7 +83,7 @@ SCHEMAS = {
              "has_egg": F(bool, "เพิ่มไข่", default=False),
              "has_size": F(bool, "ขนาด", default=False)},
     "tables": {"name": F(str, "ชื่อโต๊ะ", req=True, max=20),
-               "seats": F(int, "จำนวนที่นั่ง", min=1, max=50, default=4),
+               "seats": F(int, "จำนวนที่นั่ง", min=1, max=10, default=4),
                "status": F(str, "สถานะโต๊ะ", choices=TABLE_STATUS, default="free")},
     "ingredients": {"name": F(str, "ชื่อวัตถุดิบ", req=True, max=50),
                     "unit": F(str, "หน่วย", req=True, max=10, letters=True),
